@@ -23,7 +23,7 @@ Edite `.env.local`:
 SUPABASE_URL=https://SEU-PROJETO.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=COLE_A_SERVICE_ROLE_KEY_AQUI
 NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=COLE_A_ANON_KEY_AQUI
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=COLE_A_PUBLISHABLE_KEY_AQUI
 NEXT_PUBLIC_AUTH_ENABLED=false
 NEXT_PUBLIC_APP_NAME=Prodexy Labs
 ```
@@ -89,7 +89,7 @@ Remove-Item Env:ADMIN_PASSWORD
 
 Depois do sucesso, altere `NEXT_PUBLIC_AUTH_ENABLED=true` e reinicie o servidor ou refaça o deploy. A flag existe para impedir bloqueio acidental durante a migração; em produção ela deve permanecer habilitada.
 
-Não existe signup público. Depois da ativação, acessos de sócio são criados e administrados em **Configurações → Acessos**. Cada login fica vinculado a um registro de `partners`, que por sua vez pode participar de um ou mais projetos.
+Não existe signup público. Depois da ativação, acessos de sócio são criados e administrados em **Configurações → Acessos**. Cada login fica vinculado a um registro externo de `partners` que já possua participação vigente em pelo menos um projeto. O mesmo parceiro pode participar de vários projetos sem receber contas duplicadas.
 
 A interface permite editar o parceiro representado, desativar/reativar o acesso e gerar uma nova senha temporária. Desativação não apaga identidade, participação societária nem histórico financeiro.
 

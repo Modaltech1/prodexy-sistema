@@ -8,6 +8,8 @@ Prodexy Labs Manager e o sistema interno de gestao da Prodexy Labs, combinando f
 
 O sistema usa acessos internos gerenciados com papeis `admin` e `partner`. Nao introduza signup publico, equipes, convites, permissoes genericas ou multi-tenancy sem pedido explicito. Socios acessam somente o portal restrito aos projetos vinculados ao seu cadastro de parceiro.
 
+Um acesso `partner` novo ou reatribuido exige parceiro externo ativo com participacao vigente em pelo menos um projeto. A mesma identidade representa o socio em todos os projetos vinculados; nao crie um login por projeto.
+
 ## Stack e seguranca
 
 - Next.js App Router, React, TypeScript e CSS proprio.

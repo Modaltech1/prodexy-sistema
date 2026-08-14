@@ -50,17 +50,32 @@ async function requirePartnerProfile(userId: string) {
 
 async function requireLinkablePartner(partnerId: string, currentUserId?: string) {
   const admin = getSupabaseAdmin();
-  const [{ data: partner, error: partnerError }, { data: link, error: linkError }] = await Promise.all([
+  const today = todayInSaoPaulo();
+  const [{ data: partner, error: partnerError }, { data: link, error: linkError }, { data: participation, error: participationError }] = await Promise.all([
     admin.from("partners").select("id, name, partner_type, active").eq("id", partnerId).maybeSingle(),
     admin.from("partner_user_links").select("user_id").eq("partner_id", partnerId).maybeSingle(),
+    admin
+      .from("project_partners")
+      .select("id")
+      .eq("partner_id", partnerId)
+      .eq("active", true)
+      .lte("start_date", today)
+      .or(`end_date.is.null,end_date.gte.${today}`)
+      .limit(1)
+      .maybeSingle(),
   ]);
   if (partnerError) throw databaseError(partnerError, "Não foi possível consultar o sócio.");
   if (linkError) throw databaseError(linkError, "Não foi possível consultar o vínculo de acesso.");
+  if (participationError) throw databaseError(participationError, "Não foi possível consultar as participações do sócio.");
   if (!partner || partner.partner_type !== "external" || !partner.active) {
     throw new ManagedAccessError("Selecione um sócio externo ativo.");
   }
-  if (link && String(link.user_id) !== currentUserId) {
+  const isCurrentLink = Boolean(link && String(link.user_id) === currentUserId);
+  if (link && !isCurrentLink) {
     throw new ManagedAccessError("Este sócio já possui um acesso vinculado.", 409);
+  }
+  if (!participation && !isCurrentLink) {
+    throw new ManagedAccessError("Defina a participação vigente do sócio em pelo menos um projeto antes de criar o acesso.");
   }
   return partner as Row;
 }
@@ -82,7 +97,7 @@ export async function listPartnerAccesses(): Promise<AccessManagementData> {
   const linksByUser = new Map(links.map((row) => [String(row.user_id), String(row.partner_id)]));
   const linksByPartner = new Map(links.map((row) => [String(row.partner_id), String(row.user_id)]));
   const partnersById = new Map(partners.map((row) => [String(row.id), row]));
-  const partnerIds = [...new Set(links.map((row) => String(row.partner_id)).filter(Boolean))];
+  const partnerIds = partners.map((row) => String(row.id)).filter(Boolean);
 
   let participationRows: Row[] = [];
   if (partnerIds.length) {
@@ -135,6 +150,7 @@ export async function listPartnerAccesses(): Promise<AccessManagementData> {
     name: String(partner.name),
     active: Boolean(partner.active),
     linkedUserId: linksByPartner.get(String(partner.id)) || null,
+    projects: (projectsByPartner.get(String(partner.id)) || []).sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
   }));
 
   return { users, partners: partnerOptions };

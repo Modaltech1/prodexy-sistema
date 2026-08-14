@@ -52,6 +52,8 @@ O browser não acessa tabelas do Supabase diretamente. O cliente `service_role` 
 
 A gestão fica em `Configurações / Acessos` e chama exclusivamente `/api/admin/accesses`. A rota não aceita criação ou promoção de administradores: o único papel administrável pela interface é `partner`.
 
+Um acesso novo ou reatribuído exige um parceiro externo ativo com participação vigente em pelo menos um projeto. A regra é validada no serviço, e não apenas na interface. Contas já vinculadas continuam editáveis mesmo quando a última participação termina, para que possam ser desativadas ou corrigidas sem perder o histórico.
+
 O banco é a fonte autoritativa para papel, status, vínculo e troca obrigatória de senha. Metadados do Supabase Auth são uma projeção usada pelo proxy para roteamento antecipado. Operações que atravessam Auth e banco usam compensação: uma criação incompleta remove a identidade recém-criada, e uma redefinição de senha restaura o indicador anterior quando a credencial não puder ser atualizada.
 
 Não há exclusão física de acessos pela interface. A desativação bloqueia novas operações sem remover a identidade, o parceiro, as participações ou os snapshots financeiros.

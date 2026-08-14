@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { PauseCircle, Plus, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import { apiFetch, crudCreate, crudDelete } from "@/lib/client-api";
 import { todayInSaoPaulo } from "@/lib/date";
 import { formatMoney, formatPercent, moneyToCents } from "@/lib/money";
 import { useLookups } from "@/lib/use-lookups";
+import { SettingsNavigation, type SettingsSection } from "@/components/settings-navigation";
 
 const frequencyLabels: Record<string, string> = {
   weekly: "Semanal",
@@ -22,7 +22,7 @@ const frequencyLabels: Record<string, string> = {
 
 export default function SettingsPage() {
   const lookups = useLookups();
-  const [tab, setTab] = useState("Taxas");
+  const [tab, setTab] = useState<SettingsSection>("fees");
   const [recFin, setRecFin] = useState<any[]>([]);
   const [recTasks, setRecTasks] = useState<any[]>([]);
   const [modal, setModal] = useState<string | null>(null);
@@ -64,6 +64,21 @@ export default function SettingsPage() {
   useEffect(() => {
     void loadRecurrences();
   }, []);
+
+  useEffect(() => {
+    const syncSection = () => {
+      const section = window.location.hash.slice(1) as SettingsSection;
+      if (["fees", "categories", "partners", "recurrences"].includes(section)) setTab(section);
+    };
+    syncSection();
+    window.addEventListener("hashchange", syncSection);
+    return () => window.removeEventListener("hashchange", syncSection);
+  }, []);
+
+  const selectSection = (section: SettingsSection) => {
+    setTab(section);
+    window.history.replaceState(null, "", `#${section}`);
+  };
 
   const projectMap = useMemo(() => new Map(lookups.projects.map((project) => [project.id, project.name])), [lookups.projects]);
 
@@ -222,16 +237,13 @@ export default function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Configurações" description="Cadastros auxiliares, taxas, sócios e recorrências. Regras financeiras permanecem configuráveis e rastreáveis." />
+      <PageHeader title="Configurações" description="Cadastros, automações e segurança do workspace." />
 
-      <div className="tabs">
-        {["Taxas", "Categorias", "Sócios", "Recorrências"].map((item) => (
-          <button key={item} className={`tab ${tab === item ? "active" : ""}`} onClick={() => setTab(item)}>{item}</button>
-        ))}
-        <Link className="tab" href="/configuracoes/acessos">Acessos</Link>
-      </div>
+      <div className="settings-layout">
+        <aside className="settings-navigation-wrap"><SettingsNavigation active={tab} onSelect={selectSection} /></aside>
+        <main className="settings-workspace">
 
-      {tab === "Taxas" && (
+      {tab === "fees" && (
         <>
           <div className="section-title"><h2>Perfis de taxa</h2><Button onClick={() => openModal("fee")}><Plus size={14} /> Perfil</Button></div>
           <section className="panel table-wrap">
@@ -243,7 +255,7 @@ export default function SettingsPage() {
         </>
       )}
 
-      {tab === "Categorias" && (
+      {tab === "categories" && (
         <>
           <div className="section-title"><h2>Categorias financeiras</h2><Button onClick={() => openModal("category")}><Plus size={14} /> Categoria</Button></div>
           <section className="panel table-wrap"><table><thead><tr><th>Nome</th><th>Aplicação</th><th>Grupo de meta</th><th>Status</th></tr></thead><tbody>
@@ -252,7 +264,7 @@ export default function SettingsPage() {
         </>
       )}
 
-      {tab === "Sócios" && (
+      {tab === "partners" && (
         <>
           <div className="section-title"><h2>Participantes</h2><Button onClick={() => openModal("partner")}><Plus size={14} /> Participante</Button></div>
           <section className="panel table-wrap"><table><thead><tr><th>Nome</th><th>Tipo</th><th>Status</th></tr></thead><tbody>
@@ -262,7 +274,7 @@ export default function SettingsPage() {
         </>
       )}
 
-      {tab === "Recorrências" && (
+      {tab === "recurrences" && (
         <>
           <div className="section-title">
             <div><h2>Recorrências</h2><p>Templates geram previsões; somente o pagamento/recebimento efetivo entra no caixa realizado.</p></div>
@@ -296,6 +308,8 @@ export default function SettingsPage() {
           </div>
         </>
       )}
+        </main>
+      </div>
 
       <Modal
         open={!!modal}

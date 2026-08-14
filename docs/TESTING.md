@@ -23,10 +23,12 @@ Confirme `GET /api/health` retornando banco conectado.
 5. Em um login de socio com senha temporaria, confirme o redirecionamento obrigatorio para `/alterar-senha`.
 6. Confirme que o socio acessa `/portal`, nao acessa telas administrativas e nao consegue executar APIs administrativas.
 7. Desative o perfil em `app_users` e confirme que uma nova requisicao de API e recusada.
-8. Em Configuracoes / Acessos, crie um sublogin para um socio externo ainda sem login.
-9. Confirme que o mesmo socio enxerga todos os projetos com participacao vigente, sem cadastrar o acesso novamente.
-10. Redefina a senha e confirme a troca obrigatoria no proximo login.
-11. Desative e reative o acesso; confirme que nenhuma participacao ou distribuicao financeira foi removida.
+8. Em Configuracoes / Acessos, confirme que a tela orienta cadastrar o socio e vincula-lo a um projeto quando ainda nao houver candidato elegivel.
+9. Crie um sublogin para um socio externo ativo, com participacao vigente e ainda sem login.
+10. Confirme que um socio sem participacao vigente nao pode receber um acesso pela API.
+11. Confirme que o mesmo socio enxerga todos os projetos com participacao vigente, sem cadastrar o acesso novamente.
+12. Redefina a senha e confirme a troca obrigatoria no proximo login.
+13. Desative e reative o acesso; confirme que nenhuma participacao ou distribuicao financeira foi removida.
 
 ## Portal do socio
 

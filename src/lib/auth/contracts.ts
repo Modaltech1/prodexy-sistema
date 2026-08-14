@@ -23,6 +23,7 @@ export type PartnerAccessOption = {
   name: string;
   active: boolean;
   linkedUserId: string | null;
+  projects: ManagedProjectSummary[];
 };
 
 export type AccessManagementData = {

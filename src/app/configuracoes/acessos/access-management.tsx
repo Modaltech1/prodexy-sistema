@@ -4,6 +4,8 @@ import Link from "next/link";
 import {
   Check,
   Copy,
+  FolderKanban,
+  Handshake,
   KeyRound,
   Pencil,
   Plus,
@@ -21,9 +23,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Modal } from "@/components/ui/modal";
-import { PageHeader } from "@/components/ui/page-header";
 
-type Dialog = "create" | "edit" | "password" | "status" | "credentials" | null;
+type Dialog = "create" | "edit" | "password" | "status" | "credentials" | "prerequisite" | null;
 type Credentials = { email: string; temporaryPassword: string; reset: boolean };
 
 function generateTemporaryPassword() {
@@ -40,6 +41,33 @@ function formatDateTime(value: string | null) {
 function projectSummary(user: ManagedAccess) {
   if (!user.projects.length) return "Nenhum projeto ativo";
   return user.projects.map((project) => `${project.name} (${project.participationPercentage.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%)`).join(", ");
+}
+
+function AccessOnboarding({ readiness, onCreate }: { readiness: "ready" | "partner" | "project"; onCreate: () => void }) {
+  const ready = readiness === "ready";
+  const needsProject = readiness === "project";
+  return (
+    <section className="panel access-onboarding">
+      <div className="access-onboarding-icon"><ShieldCheck size={24} /></div>
+      <div className="access-onboarding-copy">
+        <h2>{ready ? "Crie o primeiro acesso" : "Prepare o primeiro acesso"}</h2>
+        <p>{ready ? "Já existe um sócio com participação vigente disponível para receber uma conta." : needsProject ? "O sócio já está cadastrado, mas ainda precisa participar de um projeto." : "Uma conta representa um sócio externo e enxerga somente os projetos em que ele participa."}</p>
+      </div>
+      <ol className="access-onboarding-steps">
+        <li className={readiness !== "partner" ? "complete" : ""}><Handshake size={16} /><span><strong>1. Sócio</strong><small>Cadastro externo ativo</small></span></li>
+        <li className={ready ? "complete" : ""}><FolderKanban size={16} /><span><strong>2. Participação</strong><small>Percentual vigente no projeto</small></span></li>
+        <li><KeyRound size={16} /><span><strong>3. Conta</strong><small>E-mail e senha temporária</small></span></li>
+      </ol>
+      <div className="access-onboarding-actions">
+        {ready
+          ? <Button type="button" onClick={onCreate}><Plus size={15} /> Criar acesso</Button>
+          : needsProject
+            ? <Link className="button button-primary" href="/projetos"><FolderKanban size={15} /> Vincular em projeto</Link>
+            : <Link className="button button-primary" href="/configuracoes#partners"><Plus size={15} /> Cadastrar sócio</Link>}
+        {!needsProject && <Link className="button button-secondary" href="/projetos"><FolderKanban size={15} /> Ver projetos</Link>}
+      </div>
+    </section>
+  );
 }
 
 export function AccessManagement({ initialData }: { initialData: AccessManagementData }) {
@@ -59,9 +87,18 @@ export function AccessManagement({ initialData }: { initialData: AccessManagemen
   const [copied, setCopied] = useState(false);
 
   const availablePartners = useMemo(
-    () => data.partners.filter((partner) => partner.active && (!partner.linkedUserId || partner.linkedUserId === selected?.id)),
+    () => data.partners.filter((partner) => partner.active && (partner.projects.length > 0 || partner.linkedUserId === selected?.id) && (!partner.linkedUserId || partner.linkedUserId === selected?.id)),
     [data.partners, selected?.id],
   );
+  const createCandidates = useMemo(
+    () => data.partners.filter((partner) => partner.active && !partner.linkedUserId && partner.projects.length > 0),
+    [data.partners],
+  );
+  const unlinkedActivePartners = useMemo(
+    () => data.partners.filter((partner) => partner.active && !partner.linkedUserId),
+    [data.partners],
+  );
+  const readiness = createCandidates.length ? "ready" : unlinkedActivePartners.length ? "project" : "partner";
 
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("pt-BR");
@@ -97,6 +134,10 @@ export function AccessManagement({ initialData }: { initialData: AccessManagemen
 
   function openCreate() {
     resetForm();
+    if (!createCandidates.length) {
+      setDialog("prerequisite");
+      return;
+    }
     setTemporaryPassword(generateTemporaryPassword());
     setDialog("create");
   }
@@ -233,29 +274,35 @@ export function AccessManagement({ initialData }: { initialData: AccessManagemen
 
   return (
     <>
-      <PageHeader
-        title="Acessos"
-        description="Sublogins de sócios vinculados aos projetos em que possuem participação."
-        actions={<Button onClick={openCreate} disabled={!data.partners.some((partner) => partner.active && !partner.linkedUserId)}><Plus size={15} /> Novo acesso</Button>}
-      />
-      <div className="tabs"><Link className="tab" href="/configuracoes">Cadastros</Link><span className="tab active">Acessos</span></div>
-
-      <div className="filter-bar access-filters">
-        <div className="field grow"><label htmlFor="access-search">Buscar</label><div className="input-with-icon"><Search size={15} /><input id="access-search" className="input" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nome, e-mail, sócio ou projeto" /></div></div>
-        <div className="field"><label htmlFor="access-status">Status</label><select id="access-status" className="select" value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">Todos</option><option value="active">Ativos</option><option value="inactive">Inativos</option></select></div>
+      <div className="settings-section-header">
+        <div><h2>Acessos de sócios</h2><p>Contas vinculadas aos participantes externos dos projetos.</p></div>
+        <Button onClick={openCreate}><Plus size={15} /> Novo acesso</Button>
       </div>
 
-      <section className="panel access-desktop-table table-wrap">
-        <table><thead><tr><th>Usuário</th><th>Sócio representado</th><th>Projetos</th><th>Último acesso</th><th>Status</th><th aria-label="Ações" /></tr></thead><tbody>
-          {filteredUsers.map((user) => <tr key={user.id}><td><strong>{user.displayName}</strong><small className="table-secondary">{user.email}</small></td><td>{user.partnerName}{!user.partnerActive && <small className="table-secondary negative">Cadastro inativo</small>}</td><td className="access-projects-cell">{projectSummary(user)}</td><td>{formatDateTime(user.lastLoginAt)}</td><td><Badge tone={user.active ? user.mustChangePassword ? "warning" : "positive" : "neutral"}>{user.active ? user.mustChangePassword ? "Senha temporária" : "Ativo" : "Inativo"}</Badge></td><td>{rowActions(user)}</td></tr>)}
-        </tbody></table>
-        {!filteredUsers.length && <EmptyState title="Nenhum acesso encontrado" description={data.users.length ? "Ajuste os filtros para consultar outros acessos." : "Crie o primeiro sublogin de sócio."} />}
-      </section>
+      {data.users.length === 0 ? <AccessOnboarding readiness={readiness} onCreate={openCreate} /> : <>
+        <div className="access-summary-strip"><span><strong>{data.users.length}</strong> contas</span><span><strong>{data.users.filter((user) => user.active).length}</strong> ativas</span><span><strong>{data.users.filter((user) => user.mustChangePassword && user.active).length}</strong> com senha temporária</span></div>
+        <div className="filter-bar access-filters">
+          <div className="field grow"><label htmlFor="access-search">Buscar</label><div className="input-with-icon"><Search size={15} /><input id="access-search" className="input" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nome, e-mail, sócio ou projeto" /></div></div>
+          <div className="field"><label htmlFor="access-status">Status</label><select id="access-status" className="select" value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">Todos</option><option value="active">Ativos</option><option value="inactive">Inativos</option></select></div>
+        </div>
 
-      <div className="access-mobile-list">
-        {filteredUsers.map((user) => <article className="panel access-mobile-item" key={user.id}><div className="access-mobile-heading"><div><strong>{user.displayName}</strong><span>{user.email}</span></div><Badge tone={user.active ? user.mustChangePassword ? "warning" : "positive" : "neutral"}>{user.active ? user.mustChangePassword ? "Senha temporária" : "Ativo" : "Inativo"}</Badge></div><dl><div><dt>Sócio</dt><dd>{user.partnerName}</dd></div><div><dt>Projetos</dt><dd>{projectSummary(user)}</dd></div><div><dt>Último acesso</dt><dd>{formatDateTime(user.lastLoginAt)}</dd></div></dl>{rowActions(user)}</article>)}
-        {!filteredUsers.length && <section className="panel"><EmptyState title="Nenhum acesso encontrado" description={data.users.length ? "Ajuste os filtros para consultar outros acessos." : "Crie o primeiro sublogin de sócio."} /></section>}
-      </div>
+        <section className="panel access-desktop-table table-wrap">
+          <table><thead><tr><th>Usuário</th><th>Sócio representado</th><th>Projetos</th><th>Último acesso</th><th>Status</th><th aria-label="Ações" /></tr></thead><tbody>
+            {filteredUsers.map((user) => <tr key={user.id}><td><strong>{user.displayName}</strong><small className="table-secondary">{user.email}</small></td><td>{user.partnerName}{!user.partnerActive && <small className="table-secondary negative">Cadastro inativo</small>}</td><td className="access-projects-cell">{projectSummary(user)}</td><td>{formatDateTime(user.lastLoginAt)}</td><td><Badge tone={user.active ? user.mustChangePassword ? "warning" : "positive" : "neutral"}>{user.active ? user.mustChangePassword ? "Senha temporária" : "Ativo" : "Inativo"}</Badge></td><td>{rowActions(user)}</td></tr>)}
+          </tbody></table>
+          {!filteredUsers.length && <EmptyState title="Nenhum acesso encontrado" description="Ajuste os filtros para consultar outros acessos." />}
+        </section>
+
+        <div className="access-mobile-list">
+          {filteredUsers.map((user) => <article className="panel access-mobile-item" key={user.id}><div className="access-mobile-heading"><div><strong>{user.displayName}</strong><span>{user.email}</span></div><Badge tone={user.active ? user.mustChangePassword ? "warning" : "positive" : "neutral"}>{user.active ? user.mustChangePassword ? "Senha temporária" : "Ativo" : "Inativo"}</Badge></div><dl><div><dt>Sócio</dt><dd>{user.partnerName}</dd></div><div><dt>Projetos</dt><dd>{projectSummary(user)}</dd></div><div><dt>Último acesso</dt><dd>{formatDateTime(user.lastLoginAt)}</dd></div></dl>{rowActions(user)}</article>)}
+          {!filteredUsers.length && <section className="panel"><EmptyState title="Nenhum acesso encontrado" description="Ajuste os filtros para consultar outros acessos." /></section>}
+        </div>
+      </>}
+
+      <Modal open={dialog === "prerequisite"} onClose={closeDialog} title="Antes de criar uma conta" width="560px">
+        <div className="access-prerequisite"><div className="access-onboarding-icon">{readiness === "project" ? <FolderKanban size={22} /> : <Handshake size={22} />}</div><div><strong>{readiness === "project" ? "Participação ainda não definida" : "Nenhum sócio externo disponível"}</strong><p>{readiness === "project" ? "Abra um projeto e registre o percentual vigente desse sócio. Depois, volte aqui para criar a conta." : "Cadastre o sócio externo, vincule-o a um projeto e depois crie a conta de acesso."}</p></div></div>
+        <div className="form-actions"><Button type="button" variant="secondary" onClick={closeDialog}>Cancelar</Button><Link className="button button-primary" href={readiness === "project" ? "/projetos" : "/configuracoes#partners"}>{readiness === "project" ? "Ver projetos" : "Cadastrar sócio"}</Link></div>
+      </Modal>
 
       <Modal open={dialog === "create"} onClose={closeDialog} title="Novo acesso de sócio" width="680px">
         <form onSubmit={submitCreate}>
