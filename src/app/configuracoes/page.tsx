@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { PauseCircle, Plus, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,6 @@ export default function SettingsPage() {
   // Recorrência financeira
   const [recType, setRecType] = useState<"revenue" | "cost">("cost");
   const [recProject, setRecProject] = useState("");
-  const [recClient, setRecClient] = useState("");
   const [recCategory, setRecCategory] = useState("");
   const [recDescription, setRecDescription] = useState("");
   const [recQuantity, setRecQuantity] = useState("1");
@@ -76,7 +76,6 @@ export default function SettingsPage() {
     setPartnerType("external");
     setRecType("cost");
     setRecProject("");
-    setRecClient("");
     setRecCategory("");
     setRecDescription("");
     setRecQuantity("1");
@@ -167,7 +166,6 @@ export default function SettingsPage() {
         body: JSON.stringify({
           name: name.trim(),
           project_id: recType === "cost" && recScope === "shared" ? null : recProject || null,
-          client_id: recClient || null,
           transaction_type: recType,
           category_id: recCategory || null,
           description: recDescription.trim(),
@@ -230,6 +228,7 @@ export default function SettingsPage() {
         {["Taxas", "Categorias", "Sócios", "Recorrências"].map((item) => (
           <button key={item} className={`tab ${tab === item ? "active" : ""}`} onClick={() => setTab(item)}>{item}</button>
         ))}
+        <Link className="tab" href="/configuracoes/acessos">Acessos</Link>
       </div>
 
       {tab === "Taxas" && (
@@ -323,7 +322,6 @@ export default function SettingsPage() {
               <div className="field"><label>Tipo</label><select className="select" value={recType} onChange={(e) => setRecurrenceType(e.target.value as "revenue" | "cost")}><option value="cost">Custo</option><option value="revenue">Receita</option></select></div>
               <div className="field"><label>Projeto</label><select className="select" value={recProject} disabled={recType === "cost" && recScope === "shared"} onChange={(e) => setRecurrenceProject(e.target.value)}><option value="">Prodexy / Holding</option>{lookups.projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></div>
               {recType === "cost" && <div className="field"><label>Escopo</label><select className="select" value={recScope} onChange={(e) => { const value = e.target.value as any; setRecScope(value); if (value === "shared" || value === "holding") setRecProject(""); }}><option value="holding">Holding</option><option value="direct">Direto de projeto</option><option value="shared">Compartilhado</option></select></div>}
-              <div className="field"><label>Cliente</label><select className="select" value={recClient} onChange={(e) => setRecClient(e.target.value)}><option value="">Sem cliente</option>{lookups.clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}</select></div>
               <div className="field"><label>Categoria</label><select className="select" value={recCategory} onChange={(e) => setRecCategory(e.target.value)}><option value="">Sem categoria</option>{filteredCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></div>
               <div className="field"><label>Perfil de taxa</label><select className="select" value={recFee} onChange={(e) => setRecFee(e.target.value)}><option value="">Sem taxa</option>{lookups.feeProfiles.filter((fee) => fee.active).map((fee) => <option key={fee.id} value={fee.id}>{fee.name}</option>)}</select></div>
               <div className="field full"><label>Descrição do lançamento gerado</label><input className="input" value={recDescription} onChange={(e) => setRecDescription(e.target.value)} placeholder="Ex.: Assinatura mensal da Vercel" /></div>

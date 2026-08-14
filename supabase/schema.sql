@@ -54,7 +54,7 @@ create table if not exists public.clients (
   contact_name text,
   phone text,
   email text,
-  status text not null default 'active' check (status in ('lead','active','inactive','cancelled','archived')),
+  status text not null default 'active' check (status in ('active','inactive','cancelled','archived')),
   entry_date date,
   notes text,
   created_at timestamptz not null default now(),
@@ -243,6 +243,30 @@ create table if not exists public.project_partners (
   updated_at timestamptz not null default now(),
   check (end_date is null or end_date >= start_date),
   unique(project_id, partner_id, start_date)
+);
+
+-- ============================================================
+-- Acesso gerenciado / identidades
+-- ============================================================
+create table if not exists public.app_users (
+  id uuid primary key references auth.users(id) on delete cascade,
+  display_name text not null,
+  email text not null,
+  role text not null check (role in ('admin', 'partner')),
+  active boolean not null default true,
+  must_change_password boolean not null default true,
+  created_by uuid references public.app_users(id) on delete set null,
+  last_login_at timestamptz,
+  deactivated_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.partner_user_links (
+  user_id uuid primary key references public.app_users(id) on delete cascade,
+  partner_id uuid not null unique references public.partners(id) on delete restrict,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create table if not exists public.monthly_closings (
@@ -444,6 +468,9 @@ create unique index if not exists financial_transactions_external_reference_uniq
 create index if not exists idx_recurring_financial_allocations_template on public.recurring_financial_allocations(template_id);
 create index if not exists idx_shared_allocations_project on public.shared_cost_allocations(project_id);
 create index if not exists idx_project_partners_project_dates on public.project_partners(project_id, start_date, end_date);
+create index if not exists idx_app_users_role_active on public.app_users(role, active);
+create unique index if not exists idx_app_users_email_lower on public.app_users(lower(email));
+create index if not exists idx_app_users_created_by on public.app_users(created_by);
 create index if not exists idx_tasks_status_priority on public.tasks(status, priority);
 create index if not exists idx_tasks_project on public.tasks(project_id);
 create index if not exists idx_tasks_due_at on public.tasks(due_at);
@@ -462,7 +489,7 @@ declare
 begin
   foreach t in array array[
     'app_settings','projects','clients','plans','subscriptions','fee_profiles',
-    'recurring_financial_templates','financial_transactions','partners','project_partners',
+    'recurring_financial_templates','financial_transactions','partners','project_partners','app_users','partner_user_links',
     'monthly_closings','closing_distributions','goals','recurring_task_templates','tasks',
     'work_sessions','leads'
   ]
@@ -547,7 +574,7 @@ begin
   foreach t in array array[
     'app_settings','projects','clients','project_clients','plans','subscriptions',
     'financial_categories','fee_profiles','recurring_financial_templates','recurring_financial_allocations','financial_transactions',
-    'shared_cost_allocations','partners','project_partners','monthly_closings','closing_distributions',
+    'shared_cost_allocations','partners','project_partners','app_users','partner_user_links','monthly_closings','closing_distributions',
     'goals','task_categories','recurring_task_templates','tasks','task_dependencies','task_time_entries',
     'work_sessions','work_session_items','leads','lead_activities'
   ]

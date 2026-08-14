@@ -2,6 +2,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { ok, serverError } from "@/lib/api";
 import { calculateFee } from "@/lib/finance";
 import { todayInSaoPaulo } from "@/lib/date";
+import { requireAdmin } from "@/lib/auth/access";
 
 function addPeriod(dateStr: string, frequency: string, interval: number) {
   const [year, month, day] = dateStr.split("-").map(Number);
@@ -16,6 +17,7 @@ function addPeriod(dateStr: string, frequency: string, interval: number) {
 
 export async function POST() {
   try {
+    await requireAdmin();
     const supabase = getSupabaseAdmin();
     const today = todayInSaoPaulo();
     let taskCount = 0;

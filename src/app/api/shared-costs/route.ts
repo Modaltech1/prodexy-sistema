@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { badRequest, ok, readJson, serverError } from "@/lib/api";
+import { requireAdmin } from "@/lib/auth/access";
 
 interface AllocationInput {
   project_id: string;
@@ -13,6 +14,7 @@ export async function POST(request: NextRequest) {
   const supabase = getSupabaseAdmin();
   let transactionId: string | null = null;
   try {
+    await requireAdmin();
     const body = await readJson<Record<string, unknown> & { allocations?: AllocationInput[] }>(request);
     const allocations = body.allocations ?? [];
     if (!allocations.length) return badRequest("Selecione ao menos um projeto para o rateio.");

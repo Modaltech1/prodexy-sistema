@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { badRequest, ok, readJson, serverError } from "@/lib/api";
+import { requireAdmin } from "@/lib/auth/access";
 
 async function closeEntry(id: string) {
   const supabase = getSupabaseAdmin();
@@ -20,6 +21,7 @@ async function closeEntry(id: string) {
 
 export async function GET() {
   try {
+    await requireAdmin();
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase.from("task_time_entries").select("*").is("ended_at", null).order("started_at", { ascending: false }).limit(1).maybeSingle();
     if (error) throw error;
@@ -31,6 +33,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdmin();
     const body = await readJson<{ action: "start" | "stop" | "manual"; task_id?: string; project_id?: string; minutes?: number; notes?: string }>(request);
     const supabase = getSupabaseAdmin();
 

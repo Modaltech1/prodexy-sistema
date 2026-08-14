@@ -6,7 +6,7 @@ Este arquivo registra as regras duradouras de trabalho para manutencao do Prodex
 
 Prodexy Labs Manager e o sistema interno de gestao da Prodexy Labs, combinando financeiro por projeto, clientes, SaaS, socios, custos compartilhados, metas, demandas, tempo, comercial e fechamento mensal.
 
-O sistema e single-user nesta fase. Nao introduza signup, RBAC, equipes, convites ou multi-tenancy sem pedido explicito.
+O sistema usa acessos internos gerenciados com papeis `admin` e `partner`. Nao introduza signup publico, equipes, convites, permissoes genericas ou multi-tenancy sem pedido explicito. Socios acessam somente o portal restrito aos projetos vinculados ao seu cadastro de parceiro.
 
 ## Stack e seguranca
 
@@ -40,6 +40,8 @@ Lucro liquido positivo
 - MRR nao e caixa recebido.
 - Valores monetarios devem ser calculados em centavos inteiros, salvo quando o banco exigir percentual `numeric`.
 - Nao existe regra de retencao automatica de 10%.
+- Relatorios de socio devem derivar o escopo do parceiro autenticado no servidor; nunca confie em `project_id` enviado pelo browser.
+- Mes fechado no portal do socio usa snapshots. Mes aberto pode mostrar apenas estimativa identificada e com composicao societaria valida.
 
 ## Como trabalhar
 
@@ -76,3 +78,13 @@ npm run build
 ```
 
 O script `npm run check` executa os tres.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

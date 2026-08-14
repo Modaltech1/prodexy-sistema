@@ -2,9 +2,11 @@ import { NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { ok, serverError } from "@/lib/api";
 import { normalizeMonth } from "@/lib/server-finance";
+import { requireAdmin } from "@/lib/auth/access";
 
 export async function GET(request: NextRequest) {
   try {
+    await requireAdmin();
     const supabase = getSupabaseAdmin();
     const month = normalizeMonth(request.nextUrl.searchParams.get("month"));
     const competence = `${month}-01`;

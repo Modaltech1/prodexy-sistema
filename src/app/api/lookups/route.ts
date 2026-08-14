@@ -1,8 +1,10 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { ok, serverError } from "@/lib/api";
+import { requireAdmin } from "@/lib/auth/access";
 
 export async function GET() {
   try {
+    await requireAdmin();
     const supabase = getSupabaseAdmin();
     const [projects, clients, categories, fees, partners, taskCategories, plans] = await Promise.all([
       supabase.from("projects").select("*").neq("status", "archived").order("name"),

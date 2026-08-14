@@ -1,9 +1,11 @@
 import { NextRequest } from "next/server";
 import { badRequest, ok, readJson, serverError } from "@/lib/api";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/auth/access";
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdmin();
     const body = await readJson<Record<string, any>>(request);
     const supabase = getSupabaseAdmin();
 

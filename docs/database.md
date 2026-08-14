@@ -29,6 +29,14 @@ O banco e PostgreSQL via Supabase. O schema de bootstrap fica em `supabase/schem
 - `monthly_closings`: snapshot mensal do resultado por projeto.
 - `closing_distributions`: snapshot das distribuicoes do fechamento.
 
+### Identidade e acesso
+
+- `auth.users`: identidade e credenciais administradas pelo Supabase Auth.
+- `app_users`: perfil interno, e-mail normalizado, papel, estado ativo, criador, ultimo login e troca obrigatoria de senha.
+- `partner_user_links`: vinculo um-para-um entre um login de socio e `partners`.
+- O mesmo `partner` pode pertencer a varios projetos por `project_partners`.
+- O e-mail possui indice unico sem diferenciar maiusculas e minusculas.
+
 ### Metas, demandas e tempo
 
 - `goals`: metas por competencia para projeto, holding ou conjunto de projetos de cliente.
@@ -55,6 +63,7 @@ O banco e PostgreSQL via Supabase. O schema de bootstrap fica em `supabase/schem
 - `competence_month` exige dia 1 por constraint.
 - Tabelas publicas tem RLS habilitado e acesso revogado para `anon` e `authenticated`.
 - O app usa `service_role` apenas em codigo server-only.
+- Route Handlers administrativos validam sessao e perfil ativo antes de acessar os dados.
 
 ## Migrations
 

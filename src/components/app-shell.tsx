@@ -1,14 +1,17 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   CalendarDays, FolderKanban, ListTodo, WalletCards, Gauge, ReceiptText, GitCompareArrows,
   Split, HandCoins, LockKeyhole, Sheet, Target, UsersRound, BriefcaseBusiness, Settings,
-  ChevronDown, Menu, X
+  ChevronDown, Menu, X, type LucideIcon
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { GlobalSearch } from "./global-search";
 import { QuickAdd } from "./quick-add";
+import { LogoutButton } from "./logout-button";
+import { authEnabled } from "@/lib/auth/config";
 
 const primary = [
   { href: "/", label: "Hoje", icon: CalendarDays },
@@ -33,7 +36,7 @@ const secondary = [
   { href: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
-function NavItem({ href, label, icon: Icon, exact = false, onClick }: { href: string; label: string; icon: any; exact?: boolean; onClick?: () => void }) {
+function NavItem({ href, label, icon: Icon, exact = false, onClick }: { href: string; label: string; icon: LucideIcon; exact?: boolean; onClick?: () => void }) {
   const pathname = usePathname();
   const active = exact ? pathname === href : (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`));
   return <Link href={href} onClick={onClick} className={`nav-item ${active ? "active" : ""}`}><Icon size={17}/><span>{label}</span></Link>;
@@ -45,8 +48,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [financeOpen, setFinanceOpen] = useState(pathname.startsWith("/financeiro"));
   const close = () => setMobileOpen(false);
 
+  if (pathname === "/login" || pathname === "/alterar-senha" || pathname.startsWith("/portal")) {
+    return <>{children}</>;
+  }
+
   const sidebar = <aside className="sidebar">
-    <div className="brand"><img src="/prodexy-icon-dark.ico" alt=""/><div><strong>Prodexy Labs</strong><span>Management</span></div></div>
+    <div className="brand"><Image src="/prodexy-icon-dark.ico" alt="" width={34} height={34}/><div><strong>Prodexy Labs</strong><span>Management</span></div></div>
     <nav>
       <div className="nav-group">{primary.map((item) => <NavItem {...item} key={item.href} onClick={close}/>)}</div>
       <div className="nav-group">
@@ -55,7 +62,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
       <div className="nav-group">{secondary.map((item) => <NavItem {...item} key={item.href} onClick={close}/>)}</div>
     </nav>
-    <div className="sidebar-footer"><span>Workspace</span><strong>Prodexy Labs</strong><small>Uso interno</small></div>
+    <div className="sidebar-footer"><span>Workspace</span><strong>Prodexy Labs</strong><small>Uso interno</small>{authEnabled && <LogoutButton compact />}</div>
   </aside>;
 
   return <div className="app-shell">

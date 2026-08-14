@@ -3,6 +3,7 @@ import ExcelJS from "exceljs";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { serverError } from "@/lib/api";
 import { MONTHS_PT, competenceRange } from "@/lib/date";
+import { requireAdmin } from "@/lib/auth/access";
 
 function csvEscape(value: unknown) {
   const text = value === null || value === undefined ? "" : String(value);
@@ -16,6 +17,7 @@ const DEFAULT_HEADERS = [
 
 export async function GET(request: NextRequest) {
   try {
+    await requireAdmin();
     const supabase = getSupabaseAdmin();
     const params = request.nextUrl.searchParams;
     const format = params.get("format") || "csv";

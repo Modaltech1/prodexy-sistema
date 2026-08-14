@@ -1,16 +1,18 @@
 import { NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { ok, serverError } from "@/lib/api";
+import { requireAdmin } from "@/lib/auth/access";
 
 export async function GET(request: NextRequest) {
   try {
+    await requireAdmin();
     const q = request.nextUrl.searchParams.get("q")?.trim();
     if (!q || q.length < 2) return ok([]);
     const supabase = getSupabaseAdmin();
     const pattern = `%${q.replace(/[%_]/g, "")}%`;
     const [projects, clients, tasks, leads] = await Promise.all([
       supabase.from("projects").select("id,name,status").ilike("name", pattern).limit(5),
-      supabase.from("clients").select("id,name,status").ilike("name", pattern).limit(5),
+      supabase.from("clients").select("id,name,status").ilike("name", pattern).neq("status", "archived").limit(5),
       supabase.from("tasks").select("id,title,status,project_id").ilike("title", pattern).eq("archived", false).limit(5),
       supabase.from("leads").select("id,name,company,stage").or(`name.ilike.${pattern},company.ilike.${pattern}`).limit(5),
     ]);

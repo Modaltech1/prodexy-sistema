@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { badRequest, ok, readJson, serverError } from "@/lib/api";
 import { calculateFee } from "@/lib/finance";
 import { todayInSaoPaulo } from "@/lib/date";
+import { requireAdmin } from "@/lib/auth/access";
 
 const resources = {
   projects: { table: "projects", order: "name" },
@@ -88,6 +89,7 @@ async function normalizeTransaction(body: Record<string, unknown>) {
 
 export async function GET(request: NextRequest, context: { params: Promise<{ resource: string }> }) {
   try {
+    await requireAdmin();
     const { resource } = await context.params;
     const config = resourceConfig(resource);
     if (!config) return badRequest("Recurso inválido.");
@@ -113,6 +115,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ res
 
 export async function POST(request: NextRequest, context: { params: Promise<{ resource: string }> }) {
   try {
+    await requireAdmin();
     const { resource } = await context.params;
     const config = resourceConfig(resource);
     if (!config) return badRequest("Recurso inválido.");
@@ -131,6 +134,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ re
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ resource: string }> }) {
   try {
+    await requireAdmin();
     const { resource } = await context.params;
     const config = resourceConfig(resource);
     if (!config) return badRequest("Recurso inválido.");
@@ -173,6 +177,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ r
 
 export async function DELETE(request: NextRequest, context: { params: Promise<{ resource: string }> }) {
   try {
+    await requireAdmin();
     const { resource } = await context.params;
     const config = resourceConfig(resource);
     if (!config) return badRequest("Recurso inválido.");

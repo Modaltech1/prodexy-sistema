@@ -29,6 +29,8 @@ type PublicTableName =
   | "shared_cost_allocations"
   | "partners"
   | "project_partners"
+  | "app_users"
+  | "partner_user_links"
   | "monthly_closings"
   | "closing_distributions"
   | "goals"

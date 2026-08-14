@@ -9,9 +9,11 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "import:financeiro": "tsx scripts/import-financeiro.ts",
+    "auth:create-admin": "node scripts/create-admin.mjs",
     "check": "npm run typecheck && npm run lint && npm run build"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.57.4",
     "exceljs": "^4.4.0",
     "lucide-react": "0.468.0",

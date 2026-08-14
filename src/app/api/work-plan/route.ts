@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { badRequest, ok, readJson, serverError } from "@/lib/api";
+import { requireAdmin } from "@/lib/auth/access";
 
 function taskScore(task: any, now: Date) {
   let score = { critical: 100, high: 70, medium: 40, low: 20 }[task.priority as "critical"|"high"|"medium"|"low"] || 20;
@@ -58,6 +59,7 @@ async function buildPlan(availableMinutes: number) {
 
 export async function GET(request: NextRequest) {
   try {
+    await requireAdmin();
     const minutes = Math.max(15, Math.min(12 * 60, Number(request.nextUrl.searchParams.get("minutes") || 360)));
     return ok(await buildPlan(minutes));
   } catch (error) {
@@ -67,6 +69,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAdmin();
     const body = await readJson<{ available_minutes: number; items: { task_id: string; planned_minutes: number; score?: number; reason?: string; pinned?: boolean }[] }>(request);
     if (!body.available_minutes || !body.items?.length) return badRequest("Plano vazio.");
     const supabase = getSupabaseAdmin();

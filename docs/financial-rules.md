@@ -60,6 +60,15 @@ Essa ordem aparece em `v_project_monthly_financials`, `close_project_month()` e 
 - `reopen_project_month()` reabre um fechamento, mas bloqueia reabertura quando existe distribuicao externa paga.
 - Alteracoes atuais em participantes nao devem modificar silenciosamente meses fechados.
 
+## Relatorio do socio
+
+- Mes fechado usa somente os snapshots de `monthly_closings` e `closing_distributions`.
+- Mes aberto e provisorio: usa `v_project_monthly_financials` e a participacao vigente na competencia.
+- Uma estimativa positiva so pode ser calculada quando as participacoes vigentes totalizam 100%.
+- Resultado menor ou igual a zero mostra parcela do socio igual a zero; prejuizo nao vira saldo negativo a pagar.
+- Status de pagamento pertence a distribuicao fechada. Mes aberto nao possui pagamento confirmado.
+- O escopo de projetos deve ser derivado do socio autenticado no servidor, nunca de um identificador confiado ao browser.
+
 ## Pontos proibidos sem pedido explicito
 
 - Criar retencao automatica de 10%.

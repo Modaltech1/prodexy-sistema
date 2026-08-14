@@ -14,6 +14,33 @@ npm run dev
 
 Confirme `GET /api/health` retornando banco conectado.
 
+## Acesso
+
+1. Execute `20260813_add_managed_user_access.sql` e `20260813_zz_add_access_management_fields.sql`, nesta ordem, e crie o administrador com `npm run auth:create-admin`.
+2. Ative `NEXT_PUBLIC_AUTH_ENABLED=true` e reinicie o servidor.
+3. Sem sessao, confirme que uma pagina administrativa redireciona para `/login` e uma API administrativa retorna `401`.
+4. Entre como administrador e confirme acesso as telas e APIs atuais.
+5. Em um login de socio com senha temporaria, confirme o redirecionamento obrigatorio para `/alterar-senha`.
+6. Confirme que o socio acessa `/portal`, nao acessa telas administrativas e nao consegue executar APIs administrativas.
+7. Desative o perfil em `app_users` e confirme que uma nova requisicao de API e recusada.
+8. Em Configuracoes / Acessos, crie um sublogin para um socio externo ainda sem login.
+9. Confirme que o mesmo socio enxerga todos os projetos com participacao vigente, sem cadastrar o acesso novamente.
+10. Redefina a senha e confirme a troca obrigatoria no proximo login.
+11. Desative e reative o acesso; confirme que nenhuma participacao ou distribuicao financeira foi removida.
+
+## Portal do socio
+
+1. Entre com um acesso `partner` vinculado a dois projetos e confirme que apenas esses projetos aparecem em `/portal`.
+2. Consulte uma competencia aberta com composicao total de 100% e confira a estimativa: `max(lucro, 0) x percentual do socio`.
+3. Deixe a composicao de um projeto aberto diferente de 100% e confirme que a parcela positiva fica indisponivel, sem valor parcial enganoso.
+4. Consulte um projeto com prejuizo e confirme parcela do socio igual a zero.
+5. Feche uma competencia e confirme que o portal usa os valores e o percentual do snapshot, inclusive depois de alterar a participacao futura.
+6. Marque a distribuicao como paga e confira o status no portal.
+7. Tente abrir uma API administrativa com o login de socio e confirme `403`.
+8. Tente chamar `/api/partner/report` como administrador e confirme `403`.
+9. Confirme que `/api/partner/report` nao aceita `project_id` e nunca retorna projetos de outro socio.
+10. Valide o portal em 390 px e 1280 px, sem rolagem horizontal, sobreposicao ou controles de escrita.
+
 ## Financeiro
 
 1. Cadastre uma receita recebida de R$ 1.000 em um projeto, sem taxa.

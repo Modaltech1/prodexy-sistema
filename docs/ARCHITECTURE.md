@@ -40,9 +40,35 @@ Reabrir altera o status para `reopened`. O fechamento seguinte recalcula e subst
 
 ## Segurança
 
-A V1 é single-user e não tem login interno. O browser não acessa Supabase diretamente. O Next.js usa um cliente admin server-only e as tabelas não dão acesso aos roles `anon`/`authenticated`.
+Supabase Auth é a fonte de identidade. `app_users` guarda o perfil interno (`admin` ou `partner`), estado ativo e exigência de troca de senha; `partner_user_links` associa um login de sócio a um registro de `partners`. A relação já existente em `project_partners` permite que esse mesmo sócio participe de vários projetos sem duplicar identidade.
 
-`proxy.ts` não aplica autenticação por senha nesta versão. Se a aplicação precisar ficar restrita, use proteção externa de infraestrutura ou reintroduza um mecanismo de acesso explícito.
+`proxy.ts` renova cookies de sessão e impede navegação entre as áreas. Isso não substitui a autorização no servidor: cada Route Handler administrativo chama `requireAdmin()`, que valida no banco se o perfil continua ativo e com o papel correto.
+
+O browser não acessa tabelas do Supabase diretamente. O cliente `service_role` permanece server-only, e as tabelas continuam sem permissão para `anon` e `authenticated`. Não existe signup público.
+
+`NEXT_PUBLIC_AUTH_ENABLED` controla apenas a implantação inicial. Deve ser ativada depois da migration e do bootstrap do primeiro administrador, evitando que uma versão nova bloqueie o operador antes de existir uma identidade válida.
+
+### Administração de acessos
+
+A gestão fica em `Configurações / Acessos` e chama exclusivamente `/api/admin/accesses`. A rota não aceita criação ou promoção de administradores: o único papel administrável pela interface é `partner`.
+
+O banco é a fonte autoritativa para papel, status, vínculo e troca obrigatória de senha. Metadados do Supabase Auth são uma projeção usada pelo proxy para roteamento antecipado. Operações que atravessam Auth e banco usam compensação: uma criação incompleta remove a identidade recém-criada, e uma redefinição de senha restaura o indicador anterior quando a credencial não puder ser atualizada.
+
+Não há exclusão física de acessos pela interface. A desativação bloqueia novas operações sem remover a identidade, o parceiro, as participações ou os snapshots financeiros.
+
+### Portal do sócio
+
+O portal é somente leitura e usa `/api/partner/report`. A rota chama `requirePartner()` e recebe apenas a competência; os projetos autorizados são derivados no servidor a partir do `partner_id` da sessão, de `project_partners` e dos snapshots de distribuição. O filtro de projeto da interface atua somente sobre o conjunto já autorizado e não amplia o escopo da consulta.
+
+`src/lib/partner-report/service.ts` concentra a política de leitura:
+
+- competência fechada usa `monthly_closings` e `closing_distributions`;
+- competência aberta usa `v_project_monthly_financials` e a composição vigente;
+- estimativa positiva só é exibida quando a composição soma 100%;
+- resultado não positivo mantém a participação do sócio em zero;
+- a resposta não expõe outros sócios, lançamentos administrativos ou operações de escrita.
+
+Esse contrato permite evoluir a apresentação ou criar exportações do próprio portal sem duplicar autorização e cálculo financeiro.
 
 ## Metas
 
