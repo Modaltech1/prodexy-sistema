@@ -4,6 +4,19 @@ export function isRealized(t: Pick<FinancialTransaction, "transaction_type" | "s
   return t.transaction_type === "revenue" ? t.status === "received" : t.status === "paid";
 }
 
+export function isRevenueRecognized(
+  transaction: {
+    transaction_type?: string | null;
+    status?: string | null;
+    customer_payment_status?: string | null;
+  },
+  basis: "competence" | "cash" = "competence",
+) {
+  if (transaction.transaction_type !== "revenue") return false;
+  if (transaction.status === "received") return true;
+  return basis === "competence" && transaction.customer_payment_status === "paid";
+}
+
 export function calculateFee(grossCents: number, percentage: number, fixedCents: number) {
   return Math.max(0, Math.round(grossCents * (percentage / 100)) + fixedCents);
 }

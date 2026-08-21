@@ -103,6 +103,11 @@ create table if not exists public.subscriptions (
   plan_id uuid references public.plans(id) on delete set null,
   monthly_amount_cents bigint not null default 0 check (monthly_amount_cents >= 0),
   billing_day smallint check (billing_day between 1 and 31),
+  payout_day smallint check (payout_day between 1 and 31),
+  payout_month_offset smallint not null default 1 check (payout_month_offset between 0 and 3),
+  automatic_billing boolean not null default false,
+  automatic_billing_start_month date check (automatic_billing_start_month is null or extract(day from automatic_billing_start_month) = 1),
+  last_billing_sync_at timestamptz,
   status text not null default 'active' check (status in ('active','trial','overdue','cancelled')),
   start_date date not null default current_date,
   cancellation_date date,
@@ -133,6 +138,9 @@ create table if not exists public.fee_profiles (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.subscriptions
+  add column if not exists fee_profile_id uuid references public.fee_profiles(id) on delete set null;
 
 create table if not exists public.recurring_financial_templates (
   id uuid primary key default gen_random_uuid(),
@@ -190,6 +198,10 @@ create table if not exists public.financial_transactions (
   cost_scope text not null default 'direct' check (cost_scope in ('direct','shared','holding')),
   provider text,
   recurring_template_id uuid references public.recurring_financial_templates(id) on delete set null,
+  subscription_id uuid references public.subscriptions(id) on delete set null,
+  customer_payment_status text check (customer_payment_status is null or customer_payment_status in ('scheduled','paid','failed','refunded')),
+  customer_paid_at date,
+  expected_receipt_date date,
   source text not null default 'manual' check (source in ('manual','import','integration','recurrence')),
   external_reference text,
   notes text,
@@ -465,6 +477,10 @@ create index if not exists idx_financial_transactions_type on public.financial_t
 create index if not exists idx_financial_transactions_realized on public.financial_transactions(realized_at);
 create unique index if not exists financial_transactions_external_reference_unique
   on public.financial_transactions(external_reference) where external_reference is not null;
+create index if not exists idx_financial_transactions_subscription on public.financial_transactions(subscription_id);
+create unique index if not exists financial_transactions_subscription_cycle_unique
+  on public.financial_transactions(subscription_id, competence_month)
+  where subscription_id is not null and archived = false;
 create index if not exists idx_recurring_financial_allocations_template on public.recurring_financial_allocations(template_id);
 create index if not exists idx_shared_allocations_project on public.shared_cost_allocations(project_id);
 create index if not exists idx_project_partners_project_dates on public.project_partners(project_id, start_date, end_date);
@@ -507,9 +523,9 @@ with direct as (
   select
     project_id,
     competence_month,
-    coalesce(sum(gross_amount_cents) filter (where transaction_type = 'revenue' and status = 'received'), 0)::bigint as revenue_gross_cents,
-    coalesce(sum(fee_amount_cents) filter (where transaction_type = 'revenue' and status = 'received'), 0)::bigint as revenue_fees_cents,
-    coalesce(sum(gross_amount_cents - fee_amount_cents) filter (where transaction_type = 'revenue' and status = 'received'), 0)::bigint as revenue_net_cents,
+    coalesce(sum(gross_amount_cents) filter (where transaction_type = 'revenue' and (status = 'received' or customer_payment_status = 'paid')), 0)::bigint as revenue_gross_cents,
+    coalesce(sum(fee_amount_cents) filter (where transaction_type = 'revenue' and (status = 'received' or customer_payment_status = 'paid')), 0)::bigint as revenue_fees_cents,
+    coalesce(sum(gross_amount_cents - fee_amount_cents) filter (where transaction_type = 'revenue' and (status = 'received' or customer_payment_status = 'paid')), 0)::bigint as revenue_net_cents,
     coalesce(sum(gross_amount_cents + fee_amount_cents) filter (where transaction_type = 'cost' and status = 'paid' and cost_scope = 'direct'), 0)::bigint as direct_costs_cents
   from public.financial_transactions
   where project_id is not null and archived = false and status <> 'cancelled'

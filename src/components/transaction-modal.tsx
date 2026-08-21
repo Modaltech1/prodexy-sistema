@@ -108,6 +108,17 @@ function TransactionModalContent({
     }
   };
 
+  if (transaction?.subscription_id) {
+    return (
+      <Modal open title="Mensalidade automática" onClose={onClose} width="560px">
+        <div className="note">
+          Este lançamento pertence a uma assinatura SaaS. Valor, taxa, cobrança e repasse são administrados na aba SaaS do projeto para manter um único ciclo por competência.
+        </div>
+        <div className="form-actions"><Button variant="secondary" onClick={onClose}>Fechar</Button></div>
+      </Modal>
+    );
+  }
+
   return (
     <Modal
       open

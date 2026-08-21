@@ -12,6 +12,7 @@ import { apiFetch } from "@/lib/client-api";
 import { currentCompetence, formatDate } from "@/lib/date";
 import { formatMoney } from "@/lib/money";
 import { useLookups } from "@/lib/use-lookups";
+import { isRevenueRecognized } from "@/lib/finance";
 
 const statusLabels: Record<string, string> = {
   planned: "Previsto",
@@ -26,6 +27,13 @@ function statusTone(status: string) {
   if (status === "overdue") return "negative";
   if (status === "cancelled") return "neutral";
   return "warning";
+}
+
+function displayStatus(row: any) {
+  if (row.transaction_type === "revenue" && row.status === "planned" && row.customer_payment_status === "paid") {
+    return { label: "Cliente pagou", tone: "info" };
+  }
+  return { label: statusLabels[row.status] || row.status, tone: statusTone(row.status) };
 }
 
 export default function TransactionsPage() {
@@ -89,7 +97,7 @@ export default function TransactionsPage() {
 
   const totals = filtered.reduce(
     (acc, row) => {
-      if (row.transaction_type === "revenue" && row.status === "received") {
+      if (isRevenueRecognized(row, basis)) {
         acc.revenue += Number(row.gross_amount_cents);
         acc.fees += Number(row.fee_amount_cents);
       }
@@ -153,8 +161,8 @@ export default function TransactionsPage() {
       </div>
 
       <div className="kpi-grid">
-        <div className="kpi-card"><div className="kpi-top"><span>Receita bruta filtrada</span></div><strong>{formatMoney(totals.revenue)}</strong><small>Somente recebidos</small></div>
-        <div className="kpi-card"><div className="kpi-top"><span>Taxas filtradas</span></div><strong>{formatMoney(totals.fees)}</strong><small>Sobre receitas recebidas</small></div>
+        <div className="kpi-card"><div className="kpi-top"><span>Receita bruta filtrada</span></div><strong>{formatMoney(totals.revenue)}</strong><small>{basis === "cash" ? "Somente repasses recebidos" : "Pagamentos de clientes na competência"}</small></div>
+        <div className="kpi-card"><div className="kpi-top"><span>Taxas filtradas</span></div><strong>{formatMoney(totals.fees)}</strong><small>{basis === "cash" ? "Sobre repasses recebidos" : "Sobre cobranças pagas"}</small></div>
         <div className="kpi-card kpi-positive"><div className="kpi-top"><span>Receita líquida</span></div><strong>{formatMoney(totals.revenue - totals.fees)}</strong><small>Receita bruta menos taxas</small></div>
         <div className="kpi-card kpi-negative"><div className="kpi-top"><span>Custos pagos</span></div><strong>{formatMoney(totals.cost)}</strong><small>Sem duplicar rateios</small></div>
       </div>
@@ -176,7 +184,7 @@ export default function TransactionsPage() {
                     <td><Badge tone={row.transaction_type === "revenue" ? "positive" : "negative"}>{row.transaction_type === "revenue" ? "Receita" : "Custo"}</Badge></td>
                     <td>{categoryMap.get(row.category_id) || "—"}</td>
                     <td><strong>{row.description}</strong></td>
-                    <td><Badge tone={statusTone(row.status) as any}>{statusLabels[row.status] || row.status}</Badge></td>
+                    <td><Badge tone={displayStatus(row).tone as any}>{displayStatus(row).label}</Badge>{row.subscription_id && row.status === "planned" && row.customer_payment_status === "paid" && <div className="muted" style={{fontSize:10,marginTop:3}}>Repasse {formatDate(row.expected_receipt_date)}</div>}</td>
                     <td className="numeric">{formatMoney(row.gross_amount_cents)}</td>
                     <td className="numeric">{formatMoney(row.fee_amount_cents)}</td>
                     <td className={`numeric ${row.net_amount_cents < 0 ? "negative" : ""}`}>{formatMoney(row.net_amount_cents)}</td>

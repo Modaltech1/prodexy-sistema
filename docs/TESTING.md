@@ -41,6 +41,14 @@ Confirme `GET /api/health` retornando banco conectado.
 7. Tente abrir uma API administrativa com o login de socio e confirme `403`.
 8. Tente chamar `/api/partner/report` como administrador e confirme `403`.
 9. Confirme que `/api/partner/report` nao aceita `project_id` e nunca retorna projetos de outro socio.
+
+## Custos compartilhados
+
+1. Cadastre um custo compartilhado de R$ 150,00 e aloque 100% para um projeto com composicao societaria 50/50.
+2. Confirme que o custo aparece uma unica vez no consolidado e como rateio de R$ 150,00 na atividade financeira do projeto.
+3. Confirme que a interface apresenta impacto economico de R$ 75,00 para a Prodexy e R$ 75,00 para o socio externo.
+4. Confirme que o KPI de custos separa custo direto de custo rateado e que a soma permanece correta.
+5. Em uma composicao diferente de 100%, confirme que a interface alerta composicao incompleta em vez de apresentar uma divisao enganosa.
 10. Valide o portal em 390 px e 1280 px, sem rolagem horizontal, sobreposicao ou controles de escrita.
 
 ## Financeiro
@@ -68,6 +76,18 @@ Confirme `GET /api/health` retornando banco conectado.
 2. Confirme que nasce como `Previsto`, não como `Pago`.
 3. Cadastre custo compartilhado recorrente com rateio de 100%.
 4. Gere a recorrência e confirme que a despesa nasce com as alocações, sem duplicar custo no consolidado.
+
+## Mensalidades SaaS
+
+1. Em um projeto SaaS, edite uma assinatura ativa e configure bruto, taxa Stripe, cobranca no dia 11, repasse no dia 10 do mes seguinte e primeira competencia.
+2. Execute `Sincronizar` duas vezes e confirme que existe somente um lancamento para a assinatura/competencia.
+3. Antes do dia 11, confirme `Cobranca agendada`; a receita ainda nao deve compor a competencia.
+4. Do dia 11 ate o repasse, confirme `Cliente pagou`, receita reconhecida na competencia e ausencia na visao de caixa.
+5. No dia 10 do mes seguinte ou depois, sincronize e confirme `Recebida`, `realized_at` no repasse e presenca no caixa do mes seguinte.
+6. Confira bruto menos perfil de taxa igual ao liquido do ciclo.
+7. Altere o valor da assinatura e confirme que um ciclo ja pago nao e reprecificado.
+8. Feche uma competencia e confirme que a sincronizacao nao cria ciclos nem altera valores nesse mes; um repasse posterior pode somente preencher o evento de caixa do ciclo ja reconhecido.
+9. Valide a aba SaaS em 390 px e 1280 px, inclusive modal e lista de assinaturas.
 
 ## Metas
 

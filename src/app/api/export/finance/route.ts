@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { serverError } from "@/lib/api";
 import { MONTHS_PT, competenceRange } from "@/lib/date";
 import { requireAdmin } from "@/lib/auth/access";
+import { isRevenueRecognized } from "@/lib/finance";
 
 function csvEscape(value: unknown) {
   const text = value === null || value === undefined ? "" : String(value);
@@ -144,7 +145,7 @@ export async function GET(request: NextRequest) {
         let fees = 0;
         let costs = 0;
         for (const t of base) {
-          if (t.transaction_type === "revenue" && t.status === "received") {
+          if (isRevenueRecognized(t, basis)) {
             gross += Number(t.gross_amount_cents);
             fees += Number(t.fee_amount_cents);
           } else if (t.transaction_type === "cost" && t.status === "paid") {

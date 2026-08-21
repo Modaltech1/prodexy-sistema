@@ -182,6 +182,25 @@ td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums; 
 .alert-row:last-child { border: 0; }
 .alert-row div { flex: 1; display: grid; gap: 3px; }
 .alert-row small { color: var(--muted); }
+.saas-subscriptions-header > div:first-child { min-width: 0; display: grid; gap: 3px; }
+.saas-subscriptions-header > div:first-child span { color: var(--muted); font-size: 11px; }
+.saas-sync-feedback { padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface-2); color: var(--muted); font-size: 12px; }
+.saas-calendar-note { display: flex; align-items: flex-start; gap: 9px; margin: 14px 16px 0; padding: 11px 12px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: var(--surface-2); font-size: 12px; line-height: 1.5; }
+.saas-calendar-note svg { flex: 0 0 auto; margin-top: 1px; color: var(--info); }
+.saas-subscription-list { padding: 4px 16px 10px; }
+.saas-subscription-row { display: grid; grid-template-columns: minmax(150px,1.2fr) minmax(170px,1fr) minmax(210px,1.35fr) minmax(150px,1fr) 34px; gap: 16px; align-items: center; min-height: 92px; padding: 13px 0; border-bottom: 1px solid var(--border); }
+.saas-subscription-row:last-child { border-bottom: 0; }
+.saas-subscription-client, .saas-subscription-money, .saas-subscription-schedule, .saas-subscription-cycle { min-width: 0; display: grid; gap: 5px; }
+.saas-subscription-client > strong, .saas-subscription-money > strong, .saas-subscription-schedule > strong { overflow-wrap: anywhere; }
+.saas-subscription-money > span, .saas-subscription-schedule > span, .saas-subscription-cycle > span { color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .35px; }
+.saas-subscription-row small { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.saas-subscription-cycle { justify-items: start; }
+.toggle-field { min-height: 58px; display: flex; align-items: center; gap: 10px; padding: 10px 11px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+.toggle-field input { width: 17px; height: 17px; accent-color: var(--accent); }
+.toggle-field span { display: grid; gap: 3px; }
+.toggle-field small { color: var(--muted); font-size: 10px; }
+.spin { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .bar-list { display: grid; gap: 11px; }
 .bar-row { display: grid; grid-template-columns: minmax(120px,1.1fr) 2fr auto; gap: 10px; align-items: center; }
 .bar-track { height: 7px; background: var(--surface-3); border-radius: 999px; overflow: hidden; }
@@ -196,6 +215,11 @@ td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums; 
 .inline-actions { display: flex; min-width: 0; flex-wrap: wrap; gap: 6px; align-items: center; }
 .mobile-menu, .mobile-close, .mobile-backdrop, .mobile-sidebar { display: none; }
 @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .grid-3 { grid-template-columns: 1fr; } }
+@media (max-width: 1180px) {
+  .saas-subscription-row { grid-template-columns: minmax(150px,1fr) minmax(160px,1fr) minmax(210px,1.3fr) 34px; }
+  .saas-subscription-cycle { grid-column: 1 / 4; grid-row: 2; display: flex; align-items: center; flex-wrap: wrap; }
+  .saas-subscription-row > .icon-button { grid-column: 4; grid-row: 1; }
+}
 @media (max-width: 820px) {
   .desktop-sidebar { display: none; } .app-main { margin-left: 0; } .mobile-menu { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border); background: white; border-radius: 7px; }
   .mobile-sidebar { display: block; position: fixed; inset: 0 auto 0 0; z-index: 80; transform: translateX(-100%); transition: transform .18s ease; }
@@ -206,6 +230,10 @@ td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums; 
   .grid-2, .form-grid { grid-template-columns: minmax(0,1fr); } .form-grid .full { grid-column: auto; } .page-header { align-items: stretch; flex-direction: column; } .page-actions { justify-content: flex-start; } .kpi-grid { grid-template-columns: 1fr 1fr; }
   .timeline-item { grid-template-columns: 76px minmax(0,1fr); } .timeline-item > :last-child { grid-column: 2; }
   .bar-row { grid-template-columns: minmax(100px,1fr) minmax(100px,2fr); } .bar-row > :last-child { grid-column: 2; text-align: right; }
+  .saas-subscription-row { grid-template-columns: repeat(2,minmax(0,1fr)) 34px; gap: 12px; }
+  .saas-subscription-schedule { grid-column: 1 / 3; }
+  .saas-subscription-cycle { grid-column: 1 / 3; grid-row: auto; }
+  .saas-subscription-row > .icon-button { grid-column: 3; grid-row: 1; }
 }
 @media (max-width: 520px) {
   .content { padding: 16px 10px 40px; }
@@ -231,6 +259,15 @@ td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums; 
   .modal-body { padding: 14px; }
   .modal-body > .form-actions { bottom: -14px; margin-inline: -14px; padding: 12px 14px max(14px,env(safe-area-inset-bottom)); }
   .modal-body > .form-actions .button { flex: 1 1 140px; }
+  .saas-subscriptions-header { align-items: stretch; }
+  .saas-subscriptions-header .inline-actions, .saas-subscriptions-header .button { width: 100%; }
+  .saas-subscriptions-header .button { flex: 1 1 140px; }
+  .saas-calendar-note { margin: 10px 12px 0; }
+  .saas-subscription-list { padding-inline: 12px; }
+  .saas-subscription-row { grid-template-columns: minmax(0,1fr) 34px; gap: 10px; align-items: start; padding-block: 16px; }
+  .saas-subscription-client, .saas-subscription-money, .saas-subscription-schedule, .saas-subscription-cycle { grid-column: 1 / -1; }
+  .saas-subscription-client { grid-column: 1; grid-row: 1; }
+  .saas-subscription-row > .icon-button { grid-column: 2; grid-row: 1; }
 }
 
 .recurrence-allocation-box { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; background: var(--surface-2); max-height: min(260px,35dvh); overflow: auto; overscroll-behavior: contain; }
@@ -319,6 +356,9 @@ td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums; 
 .input-action { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) 36px; gap: 7px; }
 .input-action .icon-button { width: 36px; height: 36px; }
 .table-secondary { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 400; }
+.allocation-breakdown { display: grid; gap: 7px; min-width: 240px; }
+.allocation-breakdown > div { display: grid; gap: 2px; }
+.allocation-breakdown small { color: var(--muted); font-size: 10px; line-height: 1.35; }
 .access-desktop-table table { min-width: 900px; }
 .access-projects-cell { width: 30%; max-width: 360px; color: var(--muted); line-height: 1.45; }
 .access-actions { display: flex; justify-content: flex-end; gap: 5px; }

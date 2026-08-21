@@ -75,6 +75,7 @@ Em um banco existente, execute primeiro as migrations pendentes em `supabase/mig
 ```text
 20260813_add_managed_user_access.sql
 20260813_zz_add_access_management_fields.sql
+20260821_add_saas_billing_cycles.sql
 ```
 
 Crie o primeiro administrador antes de ativar a proteção. Este bootstrap é executado localmente e usa a `service_role`; ele não cria uma tela pública de cadastro. No PowerShell:
@@ -193,6 +194,8 @@ O sistema usa Supabase Auth com sessão em cookies e dois papéis fechados: `adm
 - `src/app/api/partner/report/route.ts` — leitura exclusiva do portal do sócio
 - `src/app/api/closings/route.ts` — fechamento/reabertura
 - `src/app/api/shared-costs/route.ts` — custos compartilhados
+- `src/lib/saas-billing/service.ts` — ciclos mensais idempotentes das assinaturas SaaS
+- `src/app/api/saas/billing/sync/route.ts` — sincronização por calendário das mensalidades
 - `src/app/api/work-plan/route.ts` — priorização determinística da sessão de trabalho
 - `scripts/import-financeiro.ts` — importador opcional da planilha legada
 - `docs/ARCHITECTURE.md` — decisões arquiteturais e regras

@@ -76,6 +76,14 @@ Esse contrato permite evoluir a apresentação ou criar exportações do própri
 
 Metas são planejadas manualmente. Realizado é derivado dos dados atuais. MRR e dinheiro recebido não são tratados como sinônimos.
 
+## Assinaturas SaaS
+
+`subscriptions` e a configuracao autoritativa do contrato recorrente. A sincronizacao em `src/lib/saas-billing/service.ts` projeta cada competencia em `financial_transactions`, sem criar um modulo financeiro paralelo.
+
+O ciclo possui dois eventos independentes: pagamento do assinante e recebimento do repasse. O primeiro reconhece a receita na competencia; o segundo preenche `realized_at` e aparece no caixa. A sincronizacao usa referencia externa e indice unico por assinatura/competencia, nao reprecifica ciclos ja pagos e, em meses fechados, permite somente registrar o repasse posterior sem alterar os valores economicos.
+
+Enquanto nao houver integracao por API/webhook, os eventos sao inferidos pelas datas de calendario configuradas. Uma integracao futura com Stripe deve conciliar e atualizar esses mesmos ciclos, mantendo a fonte de verdade financeira.
+
 ## Demandas e planejamento
 
 Demandas ficam em uma estrutura única, com projeto/cliente opcionais. O planejador calcula uma pontuação determinística baseada em prioridade, atraso, proximidade do prazo, vínculo com cliente, status e categoria. A razão da prioridade é retornada junto com a tarefa.

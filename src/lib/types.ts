@@ -67,8 +67,32 @@ export interface FinancialTransaction {
   realized_at?: string | null;
   cost_scope: CostScope;
   provider?: string | null;
+  subscription_id?: string | null;
+  customer_payment_status?: "scheduled" | "paid" | "failed" | "refunded" | null;
+  customer_paid_at?: string | null;
+  expected_receipt_date?: string | null;
+  source?: "manual" | "import" | "integration" | "recurrence";
   notes?: string | null;
   archived: boolean;
+}
+
+export interface Subscription {
+  id: string;
+  project_id: string;
+  client_id: string;
+  plan_id?: string | null;
+  monthly_amount_cents: number;
+  billing_day?: number | null;
+  fee_profile_id?: string | null;
+  payout_day?: number | null;
+  payout_month_offset: number;
+  automatic_billing: boolean;
+  automatic_billing_start_month?: string | null;
+  last_billing_sync_at?: string | null;
+  status: "active" | "trial" | "overdue" | "cancelled";
+  start_date: string;
+  cancellation_date?: string | null;
+  notes?: string | null;
 }
 
 export interface Task {

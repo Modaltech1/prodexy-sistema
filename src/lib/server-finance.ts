@@ -2,6 +2,7 @@ import "server-only";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import type { ProjectFinancialSummary } from "@/lib/types";
 import { competenceRange, currentCompetence } from "@/lib/date";
+import { isRevenueRecognized } from "@/lib/finance";
 
 export function normalizeMonth(month?: string | null) {
   if (!month || !/^\d{4}-\d{2}$/.test(month)) return currentCompetence().slice(0, 7);
@@ -60,7 +61,7 @@ export async function getFinancialDashboard(monthParam?: string | null, basisPar
     distributionsByClosing.set(distribution.closing_id, rows);
   }
 
-  const realizedRevenue = transactions.filter((transaction) => transaction.transaction_type === "revenue" && transaction.status === "received");
+  const realizedRevenue = transactions.filter((transaction) => isRevenueRecognized(transaction, basis));
   const realizedCosts = transactions.filter((transaction) => transaction.transaction_type === "cost" && transaction.status === "paid");
   const selectedSharedTransactions = realizedCosts.filter((transaction) => transaction.cost_scope === "shared");
   const selectedSharedIds = new Set(selectedSharedTransactions.map((transaction) => transaction.id));

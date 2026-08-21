@@ -36,6 +36,16 @@ Essa ordem aparece em `v_project_monthly_financials`, `close_project_month()` e 
 - A visao por competencia e a base do fechamento societario.
 - A visao de caixa e gerencial e deve usar recebimentos/pagamentos realizados.
 
+## Mensalidades SaaS
+
+- Cada assinatura configurada gera no maximo um lancamento por competencia. A chave `subscription_id + competence_month` impede duplicacao ao repetir a sincronizacao.
+- `customer_payment_status = paid` representa a mensalidade paga pelo cliente e reconhece a receita na competencia, ainda que o gateway nao tenha feito o repasse.
+- `status = received` e `realized_at` representam o repasse recebido pela Prodexy e alimentam a visao de caixa.
+- O valor mensal da assinatura e o bruto efetivamente cobrado do cliente. A taxa do perfil e congelada no lancamento quando a cobranca e atingida.
+- A automacao atual e orientada por calendario. Ela infere cobranca e repasse pelas datas configuradas; a conciliacao com a Stripe continua sendo a confirmacao externa final.
+- Competencias fechadas nao recebem novos ciclos nem alteracao de valores. Um ciclo ja reconhecido pode apenas registrar posteriormente o evento de caixa (`status` e `realized_at`), sem mudar o snapshot economico.
+- Alterar valor ou taxa nao reescreve ciclos ja pagos pelo cliente ou recebidos pela Prodexy.
+
 ## Custos
 
 - `cost_scope = direct`: custo exclusivo de um projeto.
@@ -43,6 +53,8 @@ Essa ordem aparece em `v_project_monthly_financials`, `close_project_month()` e 
 - `cost_scope = holding`: custo da operacao Prodexy sem projeto.
 - Custos compartilhados nunca devem ser somados duas vezes no consolidado. A transacao original representa o custo real; `shared_cost_allocations` distribui esse custo gerencialmente.
 - O endpoint de custo compartilhado exige que a soma das alocacoes seja exatamente igual ao valor original mais taxa.
+- A atividade financeira de um projeto deve exibir tanto os custos diretos quanto os rateios compartilhados recebidos. O rateio aparece pelo valor integral atribuido ao projeto.
+- A decomposicao do rateio pela participacao societaria e informativa: demonstra quanto o custo reduz economicamente a parcela de cada participante, sem criar novos lancamentos ou uma cobranca automatica ao socio.
 
 ## Distribuicao
 

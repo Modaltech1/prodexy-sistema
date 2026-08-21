@@ -10,7 +10,7 @@ O banco e PostgreSQL via Supabase. O schema de bootstrap fica em `supabase/schem
 - `projects`: projetos como dados, com tipos `client`, `saas` e `internal`.
 - `clients`: cadastro central de clientes.
 - `project_clients`: relacionamento muitos-para-muitos entre projetos e clientes.
-- `plans` e `subscriptions`: estrutura SaaS de planos e assinaturas.
+- `plans` e `subscriptions`: estrutura SaaS de planos e assinaturas. A assinatura guarda dia de cobranca, regra de repasse, taxa e inicio da automacao.
 
 ### Financeiro
 
@@ -19,6 +19,7 @@ O banco e PostgreSQL via Supabase. O schema de bootstrap fica em `supabase/schem
 - `financial_transactions`: lancamentos financeiros. `net_amount_cents` e coluna gerada:
   - receita: `gross_amount_cents - fee_amount_cents`;
   - custo: `-1 * (gross_amount_cents + fee_amount_cents)`.
+  - ciclos SaaS usam `subscription_id`, `customer_payment_status`, `customer_paid_at` e `expected_receipt_date`; o indice parcial por assinatura/competencia garante idempotencia.
 - `shared_cost_allocations`: rateios de uma transacao compartilhada para projetos.
 - `recurring_financial_templates` e `recurring_financial_allocations`: recorrencias financeiras e seus rateios.
 

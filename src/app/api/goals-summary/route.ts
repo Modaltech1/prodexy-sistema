@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { ok, serverError } from "@/lib/api";
 import { normalizeMonth } from "@/lib/server-finance";
 import { requireAdmin } from "@/lib/auth/access";
+import { isRevenueRecognized } from "@/lib/finance";
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
       supabase.from("projects").select("id,name,project_type,status").neq("status","archived"),
       supabase.from("project_clients").select("project_id,client_id,active"),
       supabase.from("subscriptions").select("project_id,client_id,status,monthly_amount_cents"),
-      supabase.from("financial_transactions").select("project_id,transaction_type,status,gross_amount_cents,fee_amount_cents,category_id").eq("competence_month", competence).eq("archived",false),
+      supabase.from("financial_transactions").select("project_id,transaction_type,status,customer_payment_status,gross_amount_cents,fee_amount_cents,category_id").eq("competence_month", competence).eq("archived",false),
       supabase.from("financial_categories").select("id,goal_bucket"),
     ]);
     for (const r of [goalsRes, projectsRes, clientsRelRes, subsRes, transactionsRes, categoriesRes]) if (r.error) throw r.error;
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
         actualClients = new Set(relations.filter((r) => r.active).map((r) => r.client_id)).size;
       }
 
-      const realizedRevenue = transactions.filter((t) => t.transaction_type === "revenue" && t.status === "received" && (goal.scope_type === "holding" ? true : projectIds.includes(t.project_id)));
+      const realizedRevenue = transactions.filter((t) => isRevenueRecognized(t, "competence") && (goal.scope_type === "holding" ? true : projectIds.includes(t.project_id)));
       let recurring = 0, setup = 0, total = 0;
       for (const t of realizedRevenue) {
         const net = Number(t.gross_amount_cents) - Number(t.fee_amount_cents);
