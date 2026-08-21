@@ -49,6 +49,7 @@ export default function SettingsPage() {
   const [recInterval, setRecInterval] = useState("1");
   const [recNextDue, setRecNextDue] = useState(todayInSaoPaulo());
   const [allocationMode, setAllocationMode] = useState<"equal" | "manual">("equal");
+  const [projectAllocationPercentage, setProjectAllocationPercentage] = useState("100");
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [manualPercentages, setManualPercentages] = useState<Record<string, string>>({});
 
@@ -101,6 +102,7 @@ export default function SettingsPage() {
     setRecInterval("1");
     setRecNextDue(todayInSaoPaulo());
     setAllocationMode("equal");
+    setProjectAllocationPercentage("100");
     setSelectedProjects([]);
     setManualPercentages({});
     setError("");
@@ -160,7 +162,12 @@ export default function SettingsPage() {
     let allocations: Array<{ project_id: string; percentage: number }> = [];
     if (recType === "cost" && recScope === "shared") {
       if (allocationMode === "equal") {
-        const percentageEach = 100 / selectedProjects.length;
+        const allocatedPercentage = Number(projectAllocationPercentage.replace(",", "."));
+        if (!Number.isFinite(allocatedPercentage) || allocatedPercentage <= 0 || allocatedPercentage > 100) {
+          setError("O percentual destinado aos projetos deve ser maior que 0% e no máximo 100%.");
+          return;
+        }
+        const percentageEach = allocatedPercentage / selectedProjects.length;
         allocations = selectedProjects.map((projectId) => ({ project_id: projectId, percentage: percentageEach }));
       } else {
         allocations = selectedProjects.map((projectId) => ({
@@ -168,8 +175,8 @@ export default function SettingsPage() {
           percentage: Number((manualPercentages[projectId] || "0").replace(",", ".")) || 0,
         }));
         const sum = allocations.reduce((total, allocation) => total + allocation.percentage, 0);
-        if (Math.abs(sum - 100) > 0.0001) {
-          setError(`Os percentuais precisam somar 100%. Atual: ${sum.toLocaleString("pt-BR", { maximumFractionDigits: 4 })}%.`);
+        if (sum <= 0 || sum > 100.0001) {
+          setError(`O total destinado aos projetos deve ser maior que 0% e no máximo 100%. Atual: ${sum.toLocaleString("pt-BR", { maximumFractionDigits: 4 })}%.`);
           return;
         }
       }
@@ -353,16 +360,18 @@ export default function SettingsPage() {
                       <button className={`segmented-button ${allocationMode === "equal" ? "active" : ""}`} onClick={() => setAllocationMode("equal")} type="button">Divisão igual</button>
                       <button className={`segmented-button ${allocationMode === "manual" ? "active" : ""}`} onClick={() => setAllocationMode("manual")} type="button">Percentual manual</button>
                     </div>
+                    {allocationMode === "equal" && <div className="field" style={{ marginBottom: 10 }}><label>Percentual total destinado aos projetos</label><input className="input" value={projectAllocationPercentage} onChange={(event) => setProjectAllocationPercentage(event.target.value)} inputMode="decimal" placeholder="100" /></div>}
                     {lookups.projects.map((project) => {
                       const checked = selectedProjects.includes(project.id);
-                      const equalPercentage = selectedProjects.length ? 100 / selectedProjects.length : 0;
+                      const totalPercentage = Number(projectAllocationPercentage.replace(",", ".")) || 0;
+                      const equalPercentage = selectedProjects.length ? totalPercentage / selectedProjects.length : 0;
                       return <label className="allocation-option" key={project.id}>
                         <span><input type="checkbox" checked={checked} onChange={() => toggleSharedProject(project.id)} /> {project.name}</span>
                         {checked && <span className="allocation-percent">{allocationMode === "equal" ? `${equalPercentage.toLocaleString("pt-BR", { maximumFractionDigits: 3 })}%` : <input className="input" value={manualPercentages[project.id] || ""} onChange={(e) => setManualPercentages((current) => ({ ...current, [project.id]: e.target.value }))} placeholder="0,00" />}</span>}
                       </label>;
                     })}
                   </div>
-                  <small className="muted">Quando a previsão for gerada, o rateio será criado junto da despesa original. O consolidado continua contando a despesa uma única vez.</small>
+                  <small className="muted">O percentual não destinado aos projetos permanece na holding. O consolidado continua contando a despesa original uma única vez.</small>
                 </div>
               )}
             </div>

@@ -20,7 +20,7 @@ O banco e PostgreSQL via Supabase. O schema de bootstrap fica em `supabase/schem
   - receita: `gross_amount_cents - fee_amount_cents`;
   - custo: `-1 * (gross_amount_cents + fee_amount_cents)`.
   - ciclos SaaS usam `subscription_id`, `customer_payment_status`, `customer_paid_at` e `expected_receipt_date`; o indice parcial por assinatura/competencia garante idempotencia.
-- `shared_cost_allocations`: rateios de uma transacao compartilhada para projetos.
+- `shared_cost_allocations`: parcelas de uma transacao compartilhada atribuidas aos projetos; a diferenca para o custo original permanece na holding.
 - `recurring_financial_templates` e `recurring_financial_allocations`: recorrencias financeiras e seus rateios.
 
 ### Socios e fechamentos
@@ -62,6 +62,7 @@ O banco e PostgreSQL via Supabase. O schema de bootstrap fica em `supabase/schem
 
 - Chaves estrangeiras preservam relacoes entre projetos, clientes, transacoes, alocacoes e fechamentos.
 - `competence_month` exige dia 1 por constraint.
+- `validate_shared_cost_allocation_total()` impede que as parcelas dos projetos ultrapassem o custo compartilhado original.
 - Tabelas publicas tem RLS habilitado e acesso revogado para `anon` e `authenticated`.
 - O app usa `service_role` apenas em codigo server-only.
 - Route Handlers administrativos validam sessao e perfil ativo antes de acessar os dados.

@@ -3,10 +3,33 @@ import { badRequest, ok, readJson, serverError } from "@/lib/api";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/access";
 
+interface RecurringAllocationInput {
+  project_id: string;
+  percentage: number;
+}
+
+interface RecurringFinancialInput {
+  name?: string;
+  project_id?: string | null;
+  client_id?: string | null;
+  transaction_type?: string;
+  category_id?: string | null;
+  description?: string;
+  quantity?: number | string;
+  unit_amount_cents?: number | string;
+  fee_profile_id?: string | null;
+  cost_scope?: string;
+  frequency?: string;
+  interval_count?: number | string;
+  next_due_date?: string | null;
+  notes?: string | null;
+  allocations?: RecurringAllocationInput[];
+}
+
 export async function POST(request: NextRequest) {
   try {
     await requireAdmin();
-    const body = await readJson<Record<string, any>>(request);
+    const body = await readJson<RecurringFinancialInput>(request);
     const supabase = getSupabaseAdmin();
 
     const name = String(body.name || "").trim();
@@ -30,8 +53,10 @@ export async function POST(request: NextRequest) {
     const allocations = Array.isArray(body.allocations) ? body.allocations : [];
     if (transactionType === "cost" && costScope === "shared") {
       if (!allocations.length) return badRequest("Selecione os projetos do rateio recorrente.");
-      const sum = allocations.reduce((total: number, allocation: any) => total + Number(allocation.percentage || 0), 0);
-      if (Math.abs(sum - 100) > 0.0001) return badRequest(`Os percentuais do rateio devem somar 100%. Atual: ${sum.toFixed(4)}%.`);
+      const sum = allocations.reduce((total, allocation) => total + Number(allocation.percentage || 0), 0);
+      if (sum <= 0 || sum > 100.0001) {
+        return badRequest(`O percentual destinado aos projetos deve ser maior que 0% e no máximo 100%. Atual: ${sum.toFixed(4)}%.`);
+      }
     }
 
     const { data: template, error } = await supabase
@@ -59,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     try {
       if (transactionType === "cost" && costScope === "shared") {
-        const payload = allocations.map((allocation: any) => ({
+        const payload = allocations.map((allocation) => ({
           template_id: template.id,
           project_id: allocation.project_id,
           allocation_percentage: Number(allocation.percentage),

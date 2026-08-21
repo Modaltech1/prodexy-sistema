@@ -4,6 +4,18 @@ import { calculateFee } from "@/lib/finance";
 import { todayInSaoPaulo } from "@/lib/date";
 import { requireAdmin } from "@/lib/auth/access";
 
+interface FeeProfileRow {
+  id: string;
+  percentage: number | string;
+  fixed_amount_cents: number;
+}
+
+interface RecurringAllocationRow {
+  template_id: string;
+  project_id: string;
+  allocation_percentage: number | string;
+}
+
 function addPeriod(dateStr: string, frequency: string, interval: number) {
   const [year, month, day] = dateStr.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
@@ -62,22 +74,30 @@ export async function POST() {
     if (financialError) throw financialError;
 
     const feeIds = [...new Set((financialTemplates ?? []).map((template) => template.fee_profile_id).filter(Boolean))];
-    let feeMap = new Map<string, any>();
+    let feeMap = new Map<string, FeeProfileRow>();
     if (feeIds.length) {
       const { data: fees, error: feesError } = await supabase.from("fee_profiles").select("*").in("id", feeIds);
       if (feesError) throw feesError;
-      feeMap = new Map((fees ?? []).map((fee) => [fee.id, fee]));
+      feeMap = new Map((fees ?? []).map((fee) => [String(fee.id), {
+        id: String(fee.id),
+        percentage: Number(fee.percentage),
+        fixed_amount_cents: Number(fee.fixed_amount_cents),
+      }]));
     }
 
     const templateIds = (financialTemplates ?? []).map((template) => template.id);
-    let recurringAllocations: any[] = [];
+    let recurringAllocations: RecurringAllocationRow[] = [];
     if (templateIds.length) {
       const { data, error } = await supabase
         .from("recurring_financial_allocations")
         .select("*")
         .in("template_id", templateIds);
       if (error) throw error;
-      recurringAllocations = data ?? [];
+      recurringAllocations = (data ?? []).map((allocation) => ({
+        template_id: String(allocation.template_id),
+        project_id: String(allocation.project_id),
+        allocation_percentage: Number(allocation.allocation_percentage),
+      }));
     }
 
     for (const template of financialTemplates ?? []) {
@@ -115,10 +135,9 @@ export async function POST() {
       if (template.transaction_type === "cost" && template.cost_scope === "shared") {
         const rules = recurringAllocations.filter((allocation) => allocation.template_id === template.id);
         const percentageSum = rules.reduce((sum, allocation) => sum + Number(allocation.allocation_percentage || 0), 0);
-        if (!rules.length || Math.abs(percentageSum - 100) > 0.0001) {
-          // Não deixa um custo compartilhado recorrente nascer sem rateio íntegro.
+        if (!rules.length || percentageSum <= 0 || percentageSum > 100.0001) {
           await supabase.from("financial_transactions").delete().eq("id", createdTransaction.id);
-          throw new Error(`A recorrência compartilhada “${template.name}” precisa ter rateios somando 100%.`);
+          throw new Error(`A recorrência compartilhada “${template.name}” precisa destinar entre 0% e 100% aos projetos.`);
         }
 
         const totalCost = gross + fee;
@@ -126,12 +145,13 @@ export async function POST() {
           transaction_id: createdTransaction.id,
           project_id: rule.project_id,
           allocated_amount_cents: Math.round(totalCost * Number(rule.allocation_percentage) / 100),
-          allocation_percentage: Number(rule.allocation_percentage),
+          percentage: Number(rule.allocation_percentage),
           allocation_method: "percentage",
         }));
 
         const allocated = allocations.reduce((sum, allocation) => sum + allocation.allocated_amount_cents, 0);
-        const delta = totalCost - allocated;
+        const expectedAllocated = Math.round(totalCost * percentageSum / 100);
+        const delta = expectedAllocated - allocated;
         if (delta !== 0 && allocations.length) allocations[0].allocated_amount_cents += delta;
 
         const { error: allocationError } = await supabase.from("shared_cost_allocations").insert(allocations);

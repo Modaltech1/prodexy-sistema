@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { badRequest, ok, readJson, serverError } from "@/lib/api";
 import { requireAdmin } from "@/lib/auth/access";
+import { validateSharedCostAllocations } from "@/lib/shared-costs";
 
 interface AllocationInput {
   project_id: string;
@@ -19,13 +20,11 @@ export async function POST(request: NextRequest) {
     const allocations = body.allocations ?? [];
     if (!allocations.length) return badRequest("Selecione ao menos um projeto para o rateio.");
 
-    const gross = Number(body.gross_amount_cents ?? 0);
-    const fee = Number(body.fee_amount_cents ?? 0);
+    const gross = Math.round(Number(body.gross_amount_cents ?? 0));
+    const fee = Math.round(Number(body.fee_amount_cents ?? 0));
     const expected = gross + fee;
-    const allocated = allocations.reduce((sum, item) => sum + Number(item.allocated_amount_cents || 0), 0);
-    if (allocated !== expected) {
-      return badRequest(`O rateio precisa totalizar ${expected} centavos. Total informado: ${allocated}.`);
-    }
+    const validation = validateSharedCostAllocations(expected, allocations);
+    if (validation.error) return badRequest(validation.error);
 
     const transaction = {
       project_id: null,
@@ -63,7 +62,12 @@ export async function POST(request: NextRequest) {
     const { error: allocationError } = await supabase.from("shared_cost_allocations").insert(rows);
     if (allocationError) throw allocationError;
 
-    return ok({ transaction: created, allocations: rows }, { status: 201 });
+    return ok({
+      transaction: created,
+      allocations: rows,
+      allocated_amount_cents: validation.allocatedCents,
+      holding_remainder_cents: validation.holdingRemainderCents,
+    }, { status: 201 });
   } catch (error) {
     if (transactionId) await supabase.from("financial_transactions").delete().eq("id", transactionId);
     return serverError(error);

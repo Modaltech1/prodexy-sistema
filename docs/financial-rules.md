@@ -52,9 +52,10 @@ Essa ordem aparece em `v_project_monthly_financials`, `close_project_month()` e 
 - `cost_scope = shared`: despesa unica da holding com alocacoes por projeto.
 - `cost_scope = holding`: custo da operacao Prodexy sem projeto.
 - Custos compartilhados nunca devem ser somados duas vezes no consolidado. A transacao original representa o custo real; `shared_cost_allocations` distribui esse custo gerencialmente.
-- O endpoint de custo compartilhado exige que a soma das alocacoes seja exatamente igual ao valor original mais taxa.
-- A atividade financeira de um projeto deve exibir tanto os custos diretos quanto os rateios compartilhados recebidos. O rateio aparece pelo valor integral atribuido ao projeto.
-- A decomposicao do rateio pela participacao societaria e informativa: demonstra quanto o custo reduz economicamente a parcela de cada participante, sem criar novos lancamentos ou uma cobranca automatica ao socio.
+- A soma das alocacoes pode ser menor ou igual ao custo original mais taxa. O saldo nao alocado permanece como custo da holding.
+- A soma das alocacoes nunca pode ultrapassar o custo original; essa regra e validada na API e por trigger no banco.
+- A atividade financeira de um projeto exibe somente a parcela atribuida a ele, nunca o valor original inteiro quando parte do custo permaneceu na holding ou foi para outros projetos.
+- A decomposicao societaria ocorre depois do rateio entre holding e projetos. Ela demonstra quanto a parcela ja atribuida ao projeto reduz economicamente cada participante, sem criar novos lancamentos ou cobranca automatica ao socio.
 
 ## Distribuicao
 

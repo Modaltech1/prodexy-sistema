@@ -76,6 +76,7 @@ Em um banco existente, execute primeiro as migrations pendentes em `supabase/mig
 20260813_add_managed_user_access.sql
 20260813_zz_add_access_management_fields.sql
 20260821_add_saas_billing_cycles.sql
+20260821_allow_partial_shared_cost_allocations.sql
 ```
 
 Crie o primeiro administrador antes de ativar a proteção. Este bootstrap é executado localmente e usa a `service_role`; ele não cria uma tela pública de cadastro. No PowerShell:
