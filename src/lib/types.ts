@@ -150,3 +150,31 @@ export interface ProjectFinancialSummary {
   participation_sum_percentage?: number;
   participation_valid?: boolean;
 }
+
+export interface FinancialDashboardData {
+  month: string;
+  competence: string;
+  basis: "competence" | "cash";
+  revenue_gross_cents: number;
+  revenue_fees_cents: number;
+  revenue_net_cents: number;
+  total_costs_cents: number;
+  project_profit_cents: number;
+  external_share_cents: number;
+  prodexy_result_cents: number;
+  pending_distributions_cents: number;
+  holding_revenue_net_cents: number;
+  holding_costs_cents: number;
+  shared_original_cents: number;
+  shared_allocated_cents: number;
+  shared_allocation_difference_cents: number;
+  shared_holding_remainder_cents: number;
+  project_summaries: ProjectFinancialSummary[];
+}
+
+export interface FinancialProjectComparisonData {
+  period: "full_cycle";
+  start_month: string | null;
+  end_month: string;
+  project_summaries: ProjectFinancialSummary[];
+}

@@ -35,6 +35,9 @@ Essa ordem aparece em `v_project_monthly_financials`, `close_project_month()` e 
 - `realized_at` representa recebimento/pagamento efetivo.
 - A visao por competencia e a base do fechamento societario.
 - A visao de caixa e gerencial e deve usar recebimentos/pagamentos realizados.
+- A comparacao por ciclo completo soma todas as competencias disponiveis ate o mes atual.
+- Competencias fechadas entram no ciclo completo pelos snapshots de `monthly_closings` e `closing_distributions`.
+- Competencias abertas entram pelos dados vivos e pela composicao societaria vigente em cada mes, nunca pela composicao atual aplicada retroativamente a todo o historico.
 
 ## Mensalidades SaaS
 

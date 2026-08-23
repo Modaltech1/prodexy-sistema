@@ -199,6 +199,7 @@ export async function getFinancialDashboard(monthParam?: string | null, basisPar
     shared_original_cents: sharedOriginal,
     shared_allocated_cents: sharedAllocated,
     shared_allocation_difference_cents: sharedOriginal - sharedAllocated,
+    shared_holding_remainder_cents: Math.max(0, sharedOriginal - sharedAllocated),
     project_summaries: summaries,
   };
 }
