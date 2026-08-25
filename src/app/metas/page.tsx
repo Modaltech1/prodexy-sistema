@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingBlock } from "@/components/ui/loading";
 import { Modal } from "@/components/ui/modal";
 import { PageHeader } from "@/components/ui/page-header";
+import { RowActionsMenu } from "@/components/ui/row-actions-menu";
 import { apiFetch, crudCreate, crudUpdate } from "@/lib/client-api";
 import { currentCompetence } from "@/lib/date";
 import { formatMoney, moneyToCents } from "@/lib/money";
@@ -220,7 +221,7 @@ export default function GoalsPage() {
               <th className="numeric">Implantação</th>
               <th className="numeric">Recorrente</th>
               <th className="numeric">Receita total</th>
-              <th></th>
+              <th aria-label="Opções"></th>
             </tr>
           </thead>
           <tbody>
@@ -258,9 +259,7 @@ export default function GoalsPage() {
                 <div className="muted">meta {formatMoney(goal.target_total_revenue_cents)}</div>
               </td>
               <td>
-                <button className="icon-button" onClick={() => openEdit(goal)} aria-label={`Editar meta de ${goal.label}`} title="Editar meta">
-                  <Pencil size={14} />
-                </button>
+                <RowActionsMenu label={`Opções da meta ${goal.label}`} actions={[{ label: "Editar meta", icon: <Pencil size={15} />, onSelect: () => openEdit(goal) }]} />
               </td>
             </tr>})}
           </tbody>

@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Download, Pencil, Plus, Split, X } from "lucide-react";
+import { Download, Pencil, Plus, Split, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingBlock } from "@/components/ui/loading";
 import { PageHeader } from "@/components/ui/page-header";
+import { RowActionsMenu } from "@/components/ui/row-actions-menu";
 import { TransactionModal } from "@/components/transaction-modal";
-import { apiFetch } from "@/lib/client-api";
+import { apiFetch, crudDelete } from "@/lib/client-api";
 import { currentCompetence, formatDate } from "@/lib/date";
 import { formatMoney } from "@/lib/money";
 import { useLookups } from "@/lib/use-lookups";
@@ -50,6 +51,7 @@ export default function TransactionsPage() {
   const [modal, setModal] = useState(false);
   const [initialType, setInitialType] = useState<"revenue" | "cost">("revenue");
   const [editing, setEditing] = useState<any>(null);
+  const [error, setError] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -115,6 +117,23 @@ export default function TransactionsPage() {
     setModal(true);
   };
 
+  const openEdit = (row: any) => {
+    setEditing(row);
+    setInitialType(row.transaction_type);
+    setModal(true);
+  };
+
+  const remove = async (row: any) => {
+    if (!confirm(`Excluir o lançamento "${row.description}"? Ele deixará de aparecer nos cálculos e relatórios.`)) return;
+    setError("");
+    try {
+      await crudDelete("transactions", row.id);
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Não foi possível excluir o lançamento.");
+    }
+  };
+
   const clearFilters = () => {
     setMonth(currentCompetence().slice(0, 7));
     setBasis("competence");
@@ -167,6 +186,8 @@ export default function TransactionsPage() {
         <div className="kpi-card kpi-negative"><div className="kpi-top"><span>Custos pagos</span></div><strong>{formatMoney(totals.cost)}</strong><small>Sem duplicar rateios</small></div>
       </div>
 
+      {error && <div className="error-box" style={{ marginBottom: 14 }}>{error}</div>}
+
       {loading ? (
         <LoadingBlock lines={8} />
       ) : (
@@ -175,7 +196,7 @@ export default function TransactionsPage() {
             <EmptyState title="Nenhum lançamento encontrado" description="Ajuste os filtros ou adicione uma receita/custo." />
           ) : (
             <table>
-              <thead><tr><th>{basis === "cash" ? "Data de caixa" : "Data"}</th><th>Projeto</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Status</th><th className="numeric">Valor bruto</th><th className="numeric">Taxa</th><th className="numeric">Impacto financeiro</th><th></th></tr></thead>
+              <thead><tr><th>{basis === "cash" ? "Data de caixa" : "Data"}</th><th>Projeto</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Status</th><th className="numeric">Valor bruto</th><th className="numeric">Taxa</th><th className="numeric">Impacto financeiro</th><th aria-label="Opções"></th></tr></thead>
               <tbody>
                 {filtered.map((row) => (
                   <tr key={row.id}>
@@ -188,7 +209,15 @@ export default function TransactionsPage() {
                     <td className="numeric">{formatMoney(row.gross_amount_cents)}</td>
                     <td className="numeric">{formatMoney(row.fee_amount_cents)}</td>
                     <td className={`numeric ${row.net_amount_cents < 0 ? "negative" : ""}`}>{formatMoney(row.net_amount_cents)}</td>
-                    <td>{row.cost_scope === "shared" ? <a className="icon-button" href="/financeiro/custos-compartilhados" aria-label="Gerenciar custo compartilhado" title="Gerenciar em Custos compartilhados"><Split size={14} /></a> : <button className="icon-button" onClick={() => { setEditing(row); setInitialType(row.transaction_type); setModal(true); }} aria-label="Editar lançamento"><Pencil size={14} /></button>}</td>
+                    <td><RowActionsMenu
+                      label={`Opções do lançamento ${row.description}`}
+                      actions={[
+                        row.cost_scope === "shared"
+                          ? { label: "Gerenciar rateio", href: "/financeiro/custos-compartilhados", icon: <Split size={15} /> }
+                          : { label: "Editar lançamento", onSelect: () => openEdit(row), icon: <Pencil size={15} /> },
+                        { label: "Excluir lançamento", onSelect: () => remove(row), icon: <Trash2 size={15} />, tone: "danger" },
+                      ]}
+                    /></td>
                   </tr>
                 ))}
               </tbody>

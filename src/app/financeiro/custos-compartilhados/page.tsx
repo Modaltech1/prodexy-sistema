@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingBlock } from "@/components/ui/loading";
 import { Modal } from "@/components/ui/modal";
 import { PageHeader } from "@/components/ui/page-header";
+import { RowActionsMenu } from "@/components/ui/row-actions-menu";
 import { apiFetch, crudDelete, crudUpdate } from "@/lib/client-api";
 import { currentCompetence, formatDate, todayInSaoPaulo } from "@/lib/date";
 import { formatMoney, formatPercent, moneyToCents } from "@/lib/money";
@@ -175,7 +176,7 @@ export default function SharedCostsPage() {
 
     {loading ? <LoadingBlock lines={6} /> : <section className="panel table-wrap">
       {transactions.length === 0 ? <EmptyState title="Nenhum custo compartilhado" description="Cadastre Vercel, AWS ou outra despesa usada por múltiplos projetos." /> : <table>
-        <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Provedor</th><th>Status</th><th>Destino do custo</th><th className="numeric">Custo original</th><th></th></tr></thead>
+        <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Provedor</th><th>Status</th><th>Destino do custo</th><th className="numeric">Custo original</th><th aria-label="Opções"></th></tr></thead>
         <tbody>{transactions.map((transaction) => {
           const transactionAllocations = allocations.filter((allocation) => allocation.transaction_id === transaction.id);
           const originalCost = Number(transaction.gross_amount_cents) + Number(transaction.fee_amount_cents);
@@ -210,10 +211,15 @@ export default function SharedCostsPage() {
               </div>}
             </div></td>
             <td className="numeric"><strong>{formatMoney(originalCost)}</strong></td>
-            <td><div className="inline-actions">
-              {transaction.status !== "paid" && transaction.status !== "cancelled" && <button className="icon-button" title="Marcar como pago" onClick={() => void markPaid(transaction.id)}><Check size={14} /></button>}
-              <button className="icon-button" title="Arquivar" onClick={() => void remove(transaction.id)}><Trash2 size={14} /></button>
-            </div></td>
+            <td><RowActionsMenu
+              label={`Opções do custo ${transaction.description}`}
+              actions={[
+                ...(transaction.status !== "paid" && transaction.status !== "cancelled"
+                  ? [{ label: "Marcar como pago", onSelect: () => markPaid(transaction.id), icon: <Check size={15} /> }]
+                  : []),
+                { label: "Excluir custo", onSelect: () => remove(transaction.id), icon: <Trash2 size={15} />, tone: "danger" },
+              ]}
+            /></td>
           </tr>;
         })}</tbody>
       </table>}

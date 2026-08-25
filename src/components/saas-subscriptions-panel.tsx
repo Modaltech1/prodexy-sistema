@@ -75,6 +75,10 @@ export function SaasSubscriptionsPanel({
 
   const clientMap = useMemo(() => new Map(clients.map((client) => [client.id, client])), [clients]);
   const feeMap = useMemo(() => new Map(feeProfiles.map((fee) => [fee.id, fee])), [feeProfiles]);
+  const activeSubscriptions = useMemo(
+    () => subscriptions.filter((subscription) => subscription.status === "active"),
+    [subscriptions],
+  );
   const latestCycleBySubscription = useMemo(() => {
     const map = new Map<string, FinancialTransaction>();
     for (const transaction of transactions) {
@@ -177,13 +181,13 @@ export function SaasSubscriptionsPanel({
       <div className="panel-header saas-subscriptions-header">
         <div>
           <h2>Assinaturas e mensalidades</h2>
-          <span>{subscriptions.filter((subscription) => subscription.status === "active").length} assinatura(s) ativa(s)</span>
+          <span>{activeSubscriptions.length} assinatura(s) ativa(s) · somente elas entram na sincronização</span>
         </div>
         <div className="inline-actions">
-          <Button variant="secondary" onClick={sync} disabled={syncing || !subscriptions.length}>
-            <RefreshCw size={14} className={syncing ? "spin" : ""} /> {syncing ? "Sincronizando" : "Sincronizar"}
+          <Button variant="secondary" onClick={sync} disabled={syncing || !activeSubscriptions.length} title={!activeSubscriptions.length ? "Nenhuma assinatura ativa para sincronizar" : undefined}>
+            <RefreshCw size={14} className={syncing ? "spin" : ""} /> {syncing ? "Sincronizando" : "Sincronizar ativas"}
           </Button>
-          <Button variant="secondary" onClick={openNew}><Plus size={14} /> Assinatura</Button>
+          <Button variant="secondary" onClick={openNew} disabled={!clients.some((client) => client.status === "active")} title={!clients.length ? "Vincule um cliente ao projeto primeiro" : undefined}><Plus size={14} /> Assinatura</Button>
         </div>
       </div>
       {feedback && <div className="saas-sync-feedback">{feedback}</div>}
@@ -192,7 +196,7 @@ export function SaasSubscriptionsPanel({
         <span>Modo calendário: cobrança e repasse são atualizados pelas datas configuradas. A conciliação com a Stripe continua sendo a confirmação final.</span>
       </div>
       {subscriptions.length === 0 ? (
-        <EmptyState title="Nenhuma assinatura" description="Cadastre a primeira assinatura recorrente deste SaaS." />
+        <EmptyState title="Nenhuma assinatura" description={clients.length ? "Os clientes vinculados podem permanecer sem plano ou receber uma assinatura quando necessário." : "Vincule clientes na aba Clientes antes de criar uma assinatura."} />
       ) : (
         <div className="saas-subscription-list">
           {subscriptions.map((subscription) => {
@@ -252,7 +256,7 @@ export function SaasSubscriptionsPanel({
             </select>
           </div>
           <div className="field">
-            <label>Plano</label>
+            <label>Plano (opcional)</label>
             <select className="select" value={planId} onChange={(event) => {
               setPlanId(event.target.value);
               const plan = plans.find((item) => item.id === event.target.value);

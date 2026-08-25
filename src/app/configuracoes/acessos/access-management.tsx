@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Modal } from "@/components/ui/modal";
+import { RowActionsMenu } from "@/components/ui/row-actions-menu";
 
 type Dialog = "create" | "edit" | "password" | "status" | "credentials" | "prerequisite" | null;
 type Credentials = { email: string; temporaryPassword: string; reset: boolean };
@@ -265,11 +266,19 @@ export function AccessManagement({ initialData }: { initialData: AccessManagemen
   }
 
   const rowActions = (user: ManagedAccess) => (
-    <div className="access-actions">
-      <button className="icon-button" type="button" onClick={() => openEdit(user)} title="Editar acesso" aria-label={`Editar acesso de ${user.displayName}`}><Pencil size={15} /></button>
-      <button className="icon-button" type="button" onClick={() => openPasswordReset(user)} title="Redefinir senha" aria-label={`Redefinir senha de ${user.displayName}`}><KeyRound size={15} /></button>
-      <button className="icon-button" type="button" onClick={() => openStatus(user)} title={user.active ? "Desativar acesso" : "Reativar acesso"} aria-label={`${user.active ? "Desativar" : "Reativar"} acesso de ${user.displayName}`}>{user.active ? <UserX size={15} /> : <UserCheck size={15} />}</button>
-    </div>
+    <RowActionsMenu
+      label={`Opções do acesso de ${user.displayName}`}
+      actions={[
+        { label: "Editar acesso", icon: <Pencil size={15} />, onSelect: () => openEdit(user) },
+        { label: "Redefinir senha", icon: <KeyRound size={15} />, onSelect: () => openPasswordReset(user) },
+        {
+          label: user.active ? "Desativar acesso" : "Reativar acesso",
+          icon: user.active ? <UserX size={15} /> : <UserCheck size={15} />,
+          onSelect: () => openStatus(user),
+          tone: user.active ? "danger" : "default",
+        },
+      ]}
+    />
   );
 
   return (

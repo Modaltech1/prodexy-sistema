@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingBlock } from "@/components/ui/loading";
 import { Modal } from "@/components/ui/modal";
 import { PageHeader } from "@/components/ui/page-header";
+import { RowActionsMenu } from "@/components/ui/row-actions-menu";
 import { apiFetch, crudCreate, crudUpdate } from "@/lib/client-api";
 import { formatDate, todayInSaoPaulo } from "@/lib/date";
 import { formatMoney } from "@/lib/money";
@@ -44,6 +45,7 @@ export default function ClientsPage() {
   const [status, setStatus] = useState<ClientStatus>("active");
   const [entryDate, setEntryDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [linkProject, setLinkProject] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -104,6 +106,7 @@ export default function ClientsPage() {
     setStatus("active");
     setEntryDate(todayInSaoPaulo());
     setNotes("");
+    setLinkProject(new URLSearchParams(window.location.search).get("projeto") || "");
     setError("");
     setModal(true);
   }
@@ -117,6 +120,7 @@ export default function ClientsPage() {
     setStatus(["active", "inactive", "cancelled"].includes(client.status) ? client.status as ClientStatus : "active");
     setEntryDate(client.entry_date || "");
     setNotes(client.notes || "");
+    setLinkProject("");
     setError("");
     setModal(true);
   }
@@ -139,14 +143,50 @@ export default function ClientsPage() {
       entry_date: entryDate || null,
       notes: notes || null,
     };
+    let savedClient: Client | null = null;
     try {
-      if (editing) await crudUpdate("clients", editing.id, payload);
-      else await crudCreate("clients", payload);
+      savedClient = editing
+        ? await crudUpdate<Client>("clients", editing.id, payload)
+        : await crudCreate<Client>("clients", payload);
+      if (!savedClient) throw new Error("O cliente foi salvo, mas a resposta não pôde ser confirmada.");
+      const savedClientId = savedClient.id;
+
+      if (linkProject) {
+        const existingRelation = relations.find((relation) =>
+          relation.client_id === savedClientId && relation.project_id === linkProject,
+        );
+        if (existingRelation) {
+          await crudUpdate("project-clients", existingRelation.id, { active: true });
+        } else {
+          await crudCreate("project-clients", {
+            project_id: linkProject,
+            client_id: savedClientId,
+            relationship_type: "client",
+            active: true,
+            started_at: entryDate || todayInSaoPaulo(),
+          });
+        }
+
+        const selectedProject = lookups.projects.find((item) => item.id === linkProject);
+        if (selectedProject?.project_type === "client" && !selectedProject.primary_client_id) {
+          await crudUpdate("projects", linkProject, { primary_client_id: savedClientId });
+        }
+      }
       setModal(false);
       await load();
       await lookups.refresh();
+      const returnTo = new URLSearchParams(window.location.search).get("retorno");
+      if (returnTo?.startsWith("/projetos/") && !returnTo.includes("//")) {
+        window.location.assign(returnTo);
+      }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Erro ao salvar.");
+      if (!editing && savedClient) {
+        setEditing(savedClient);
+        await load();
+        setError(`O cliente foi criado, mas o vínculo não pôde ser concluído. Tente salvar novamente. ${cause instanceof Error ? cause.message : ""}`.trim());
+      } else {
+        setError(cause instanceof Error ? cause.message : "Erro ao salvar.");
+      }
     } finally {
       setSaving(false);
     }
@@ -157,6 +197,14 @@ export default function ClientsPage() {
     setProject("all");
     setStatusFilter("all");
   };
+
+  const editingRelations = editing
+    ? relations.filter((relation) => relation.client_id === editing.id && relation.active)
+    : [];
+  const availableProjects = lookups.projects.filter((item) =>
+    item.status !== "archived"
+    && !editingRelations.some((relation) => relation.project_id === item.id),
+  );
 
   return <>
     <PageHeader title="Clientes" description="Empresas com vínculo ativo ou histórico com os projetos da Prodexy." actions={<Button onClick={openNew}><Plus size={15} /> Novo cliente</Button>} />
@@ -169,7 +217,7 @@ export default function ClientsPage() {
 
     {loading ? <LoadingBlock lines={7} /> : <section className="panel table-wrap">
       {filtered.length === 0 ? <EmptyState title="Nenhum cliente encontrado" /> : <table>
-        <thead><tr><th>Empresa</th><th>Responsável</th><th>Projetos</th><th>Assinaturas</th><th>Status</th><th>Entrada</th><th></th></tr></thead>
+        <thead><tr><th>Empresa</th><th>Responsável</th><th>Projetos</th><th>Assinaturas</th><th>Status</th><th>Entrada</th><th aria-label="Opções"></th></tr></thead>
         <tbody>{filtered.map((client) => {
           const clientRelations = relations.filter((relation) => relation.client_id === client.id && relation.active);
           const activeSubscriptions = subscriptions.filter((subscription) => subscription.client_id === client.id && ["active", "trial", "overdue"].includes(subscription.status));
@@ -180,7 +228,7 @@ export default function ClientsPage() {
             <td>{activeSubscriptions.length ? <div>{activeSubscriptions.map((subscription) => <div key={subscription.id}>{projectMap.get(subscription.project_id) || "SaaS"}: <strong>{formatMoney(subscription.monthly_amount_cents)}/mês</strong></div>)}</div> : "—"}</td>
             <td><Badge tone={client.status === "active" ? "positive" : client.status === "cancelled" ? "negative" : "neutral"}>{statusLabels[client.status] || client.status}</Badge></td>
             <td>{formatDate(client.entry_date)}</td>
-            <td><button className="icon-button" onClick={() => openEdit(client)} aria-label="Editar cliente" title="Editar cliente"><Pencil size={14} /></button></td>
+            <td><RowActionsMenu label={`Opções de ${client.name}`} actions={[{ label: "Editar cliente", icon: <Pencil size={15} />, onSelect: () => openEdit(client) }]} /></td>
           </tr>;
         })}</tbody>
       </table>}
@@ -195,6 +243,8 @@ export default function ClientsPage() {
         <div className="field"><label>E-mail</label><input className="input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} /></div>
         <div className="field"><label>Status</label><select className="select" value={status} onChange={(event) => setStatus(event.target.value as ClientStatus)}><option value="active">Ativo</option><option value="inactive">Inativo</option><option value="cancelled">Cancelado</option></select></div>
         <div className="field"><label>Data de entrada</label><input className="input" type="date" value={entryDate} onChange={(event) => setEntryDate(event.target.value)} /></div>
+        {editingRelations.length > 0 && <div className="field full"><label>Projetos vinculados</label><div className="client-project-links">{editingRelations.map((relation) => <Badge key={relation.id}>{projectMap.get(relation.project_id) || "Projeto"}</Badge>)}</div></div>}
+        <div className="field full"><label>Vincular ao projeto (opcional)</label><select className="select" value={linkProject} onChange={(event) => setLinkProject(event.target.value)}><option value="">Nenhum projeto adicional</option>{availableProjects.map((item) => <option key={item.id} value={item.id}>{item.name}{item.project_type === "saas" ? " · SaaS" : ""}</option>)}</select><small>O vínculo não cria assinatura nem cobrança. Em projetos SaaS, a mensalidade continua opcional.</small></div>
         <div className="field full"><label>Observações</label><textarea className="textarea" value={notes} onChange={(event) => setNotes(event.target.value)} /></div>
       </div>
       <div className="form-actions"><Button variant="secondary" onClick={() => setModal(false)}>Cancelar</Button><Button onClick={save} disabled={saving}>{saving ? "Salvando..." : "Salvar cliente"}</Button></div>
