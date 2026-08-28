@@ -73,6 +73,12 @@ O portal é somente leitura e usa `/api/partner/report`. A rota chama `requirePa
 
 Esse contrato permite evoluir a apresentação ou criar exportações do próprio portal sem duplicar autorização e cálculo financeiro.
 
+### PWA
+
+O aplicativo possui manifesto e service worker próprios. A instalação usa a mesma aplicação e as mesmas rotas, em modo `standalone`, sem criar uma interface paralela.
+
+O service worker aplica cache somente a arquivos estáticos versionados, ícones e à página offline neutra. Documentos autenticados, APIs, cookies, sessões e respostas financeiras permanecem `network-only`; uma navegação sem conexão recebe apenas `public/offline.html`.
+
 ## Metas
 
 Metas são planejadas manualmente. Realizado é derivado dos dados atuais. MRR e dinheiro recebido não são tratados como sinônimos.

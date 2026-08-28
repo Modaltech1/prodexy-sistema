@@ -186,6 +186,12 @@ O sistema usa Supabase Auth com sessão em cookies e dois papéis fechados: `adm
 - senha temporária exige troca antes do primeiro acesso aos dados;
 - não há signup público nem acesso direto do browser às tabelas.
 
+## Instalação como aplicativo
+
+Em produção HTTPS, o sistema pode ser adicionado à tela inicial pelo navegador e abre em modo independente, mantendo a mesma interface. No Android, use **Instalar aplicativo**; no Safari do iPhone, use **Compartilhar → Adicionar à Tela de Início**.
+
+O modo offline não armazena dados financeiros ou páginas autenticadas. Sem conexão, o aplicativo exibe somente uma tela neutra e volta a consultar o servidor quando a rede retorna.
+
 ## Arquivos importantes
 
 - `schema.sql` — banco completo para o SQL Editor
