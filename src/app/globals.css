@@ -376,6 +376,18 @@ td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums; 
 .partner-breakdown-share span { color: var(--muted); font-size: 11px; }
 .partner-breakdown-share strong { font-size: 20px; font-variant-numeric: tabular-nums; }
 .partner-breakdown-empty { margin: 4px 0 0; color: var(--muted); font-size: 11px; text-align: center; }
+.partner-movements { margin-top: 16px; }
+.partner-movements .panel-header > div { min-width: 0; }
+.partner-movements .panel-header h2 { overflow-wrap: anywhere; }
+.partner-movements .panel-header p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+.partner-movement-table { min-width: 760px; }
+.partner-movement-table th:first-child, .partner-movement-table td:first-child { width: 108px; }
+.partner-movement-table th:nth-child(3), .partner-movement-table td:nth-child(3) { width: 132px; }
+.partner-movement-table th:nth-child(4), .partner-movement-table td:nth-child(4) { width: 118px; }
+.partner-movement-table th:last-child, .partner-movement-table td:last-child { width: 180px; }
+.partner-movement-value { display: grid; justify-items: end; gap: 2px; font-variant-numeric: tabular-nums; }
+.partner-movement-value span { color: var(--muted); font-size: 9px; font-weight: 400; white-space: nowrap; }
+.partner-movement-mobile { display: none; }
 .spin { animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -489,6 +501,16 @@ td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums; 
   .partner-share-line > div:first-child > strong { font-size: 17px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
   .partner-share-badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
   .partner-breakdown-share { align-items: flex-start; flex-direction: column; }
+  .partner-movement-desktop { display: none; }
+  .partner-movement-mobile { display: grid; }
+  .partner-movement-card { min-width: 0; padding: 13px; border-top: 1px solid var(--border); display: grid; gap: 11px; }
+  .partner-movement-card:first-child { border-top: 0; }
+  .partner-movement-card-heading { min-width: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .partner-movement-card-heading > div:first-child { min-width: 0; display: grid; gap: 3px; }
+  .partner-movement-card-heading > div:first-child strong { overflow-wrap: anywhere; }
+  .partner-movement-card-heading > div:first-child span { color: var(--muted); font-size: 10px; }
+  .partner-movement-card-heading .partner-movement-value { flex: 0 0 auto; }
+  .partner-movement-card-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--muted); font-size: 10px; }
   .access-desktop-table { display: none; }
   .access-mobile-list { display: grid; gap: 10px; }
   .access-mobile-item { padding: 13px; border-radius: 8px; }
@@ -524,6 +546,9 @@ td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums; 
   .partner-breakdown .panel-header { align-items: flex-start; flex-direction: column; }
   .partner-breakdown .money-line { align-items: flex-start; }
   .partner-breakdown .money-line span:first-child { max-width: 62%; }
+  .partner-movements .panel-header { align-items: flex-start; flex-direction: column; }
+  .partner-movement-card-heading { flex-direction: column; }
+  .partner-movement-card-heading .partner-movement-value { justify-items: start; }
   .context-navigation { margin-inline: -2px; }
   .context-navigation-item { flex: 0 0 auto; }
   .settings-navigation-item { min-width: 126px; flex-basis: 126px; min-height: 42px; }

@@ -64,11 +64,12 @@ O portal é somente leitura e usa `/api/partner/report`. A rota chama `requirePa
 
 `src/lib/partner-report/service.ts` concentra a política de leitura:
 
-- competência fechada usa `monthly_closings` e `closing_distributions`;
+- competência fechada usa `monthly_closings`, `closing_distributions` e `closing_movements`;
 - competência aberta usa `v_project_monthly_financials` e a composição vigente;
 - estimativa positiva só é exibida quando a composição soma 100%;
 - resultado não positivo mantém a participação do sócio em zero;
-- a resposta não expõe outros sócios, lançamentos administrativos ou operações de escrita.
+- as movimentações expõem somente receitas, custos diretos e a parcela de rateio do projeto autorizado;
+- a resposta não expõe outros sócios, o custo compartilhado original, rateios de outros projetos ou operações de escrita.
 
 Esse contrato permite evoluir a apresentação ou criar exportações do próprio portal sem duplicar autorização e cálculo financeiro.
 

@@ -64,6 +64,15 @@ Confirme `GET /api/health` retornando banco conectado.
 9. Marque a distribuição externa como paga.
 10. Reabertura deve ser bloqueada se houver distribuição externa paga.
 
+## Portal do socio
+
+1. Em um mes aberto, confirme que o socio ve todas as receitas, custos diretos e rateios dos projetos autorizados.
+2. Para custo compartilhado, confirme que aparece somente a parcela alocada ao projeto, sem valor original ou nomes de outros projetos.
+3. Confirme que lancamentos previstos aparecem como fora do resultado atual e que realizados conciliam com o demonstrativo.
+4. Feche o mes, altere um lancamento original e confirme que movimentos e totais fechados permanecem no snapshot.
+5. Confirme que projetos, movimentos e socios sem vinculo com o login nunca aparecem na resposta da API.
+6. Valide tabela e lista responsiva em 390 px e 1280 px, sem rolagem horizontal na pagina.
+
 ## Prejuízo
 
 1. Use um projeto/mês com receita líquida menor que os custos.

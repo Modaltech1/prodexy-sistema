@@ -33,6 +33,7 @@ type PublicTableName =
   | "partner_user_links"
   | "monthly_closings"
   | "closing_distributions"
+  | "closing_movements"
   | "goals"
   | "task_categories"
   | "recurring_task_templates"

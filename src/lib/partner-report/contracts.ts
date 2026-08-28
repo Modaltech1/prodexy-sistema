@@ -1,5 +1,17 @@
 export type PartnerShareKind = "confirmed" | "estimated" | "unavailable";
 export type PartnerPaymentStatus = "pending" | "paid" | "cancelled" | "mixed" | null;
+export type PartnerMovementKind = "revenue" | "direct_cost" | "shared_cost";
+
+export type PartnerReportMovement = {
+  id: string;
+  date: string;
+  description: string;
+  kind: PartnerMovementKind;
+  categoryName: string | null;
+  status: string;
+  projectAmountCents: number;
+  includedInResult: boolean;
+};
 
 export type PartnerReportProject = {
   id: string;
@@ -19,6 +31,7 @@ export type PartnerReportProject = {
   partnerShareCents: number | null;
   shareKind: PartnerShareKind;
   paymentStatus: PartnerPaymentStatus;
+  movements: PartnerReportMovement[];
 };
 
 export type PartnerReportData = {

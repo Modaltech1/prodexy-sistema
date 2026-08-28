@@ -72,18 +72,21 @@ Essa ordem aparece em `v_project_monthly_financials`, `close_project_month()` e 
 
 - `monthly_closings` guarda snapshot de receita, taxas, custos, lucro e margem.
 - `closing_distributions` guarda snapshot de participantes, percentuais e valores.
+- `closing_movements` guarda o demonstrativo resumido das movimentacoes que sustentam o fechamento.
 - `close_project_month()` calcula o snapshot dentro do PostgreSQL.
 - `reopen_project_month()` reabre um fechamento, mas bloqueia reabertura quando existe distribuicao externa paga.
 - Alteracoes atuais em participantes nao devem modificar silenciosamente meses fechados.
 
 ## Relatorio do socio
 
-- Mes fechado usa somente os snapshots de `monthly_closings` e `closing_distributions`.
+- Mes fechado usa somente os snapshots de `monthly_closings`, `closing_distributions` e `closing_movements`.
 - Mes aberto e provisorio: usa `v_project_monthly_financials` e a participacao vigente na competencia.
 - Uma estimativa positiva so pode ser calculada quando as participacoes vigentes totalizam 100%.
 - Resultado menor ou igual a zero mostra parcela do socio igual a zero; prejuizo nao vira saldo negativo a pagar.
 - Status de pagamento pertence a distribuicao fechada. Mes aberto nao possui pagamento confirmado.
 - O escopo de projetos deve ser derivado do socio autenticado no servidor, nunca de um identificador confiado ao browser.
+- O portal lista receitas, custos diretos e custos compartilhados do periodo. Em rateios, mostra apenas a parcela alocada ao projeto autorizado, sem expor valor original ou outros projetos.
+- Movimentacoes previstas podem ser listadas para transparencia, mas devem ser identificadas como fora do resultado atual.
 
 ## Pontos proibidos sem pedido explicito
 

@@ -29,6 +29,7 @@ O banco e PostgreSQL via Supabase. O schema de bootstrap fica em `supabase/schem
 - `project_partners`: participacoes por projeto com vigencia.
 - `monthly_closings`: snapshot mensal do resultado por projeto.
 - `closing_distributions`: snapshot das distribuicoes do fechamento.
+- `closing_movements`: snapshot resumido das movimentacoes exibidas no portal do socio.
 
 ### Identidade e acesso
 

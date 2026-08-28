@@ -4,9 +4,11 @@ import { AlertTriangle, CheckCircle2, Clock3, FolderKanban, RefreshCw } from "lu
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { formatDate } from "@/lib/date";
 import { formatMoney, formatPercent } from "@/lib/money";
 import {
   summarizePartnerProjects,
+  type PartnerReportMovement,
   type PartnerPaymentStatus,
   type PartnerReportData,
   type PartnerReportProject,
@@ -127,6 +129,83 @@ function FinancialBreakdown({ project }: { project: PartnerReportProject }) {
   );
 }
 
+function movementKindLabel(kind: PartnerReportMovement["kind"]) {
+  if (kind === "revenue") return "Receita";
+  if (kind === "shared_cost") return "Custo rateado";
+  return "Custo direto";
+}
+
+function movementTone(kind: PartnerReportMovement["kind"]): "positive" | "negative" {
+  if (kind === "revenue") return "positive";
+  return "negative";
+}
+
+function movementStatus(status: string) {
+  if (status === "received") return { label: "Recebido", tone: "positive" as const };
+  if (status === "paid") return { label: "Pago", tone: "positive" as const };
+  if (status === "customer_paid") return { label: "Cliente pagou", tone: "info" as const };
+  if (status === "overdue") return { label: "Em atraso", tone: "negative" as const };
+  if (status === "cancelled") return { label: "Cancelado", tone: "negative" as const };
+  return { label: "Previsto", tone: "neutral" as const };
+}
+
+function MovementValue({ movement }: { movement: PartnerReportMovement }) {
+  return (
+    <div className="partner-movement-value">
+      <strong className={movement.includedInResult
+        ? movement.projectAmountCents < 0 ? "negative" : movement.projectAmountCents > 0 ? "positive" : ""
+        : "muted"}
+      >{formatMoney(movement.projectAmountCents)}</strong>
+      {!movement.includedInResult && <span>Fora do resultado atual</span>}
+    </div>
+  );
+}
+
+function ProjectMovements({ project }: { project: PartnerReportProject }) {
+  return (
+    <section className="panel partner-movements">
+      <div className="panel-header">
+        <div><h2>Movimentações de {project.name}</h2><p>{project.movements.length} {project.movements.length === 1 ? "movimentação no período" : "movimentações no período"}</p></div>
+        <ProjectStatus project={project} />
+      </div>
+      {!project.movements.length ? (
+        <EmptyState title="Nenhuma movimentação no período" description="Não há receitas, custos diretos ou rateios vinculados a este projeto nesta competência." />
+      ) : (
+        <>
+          <div className="table-wrap partner-movement-desktop">
+            <table className="partner-movement-table">
+              <thead><tr><th>Data</th><th>Movimentação</th><th>Tipo</th><th>Status</th><th className="numeric">Valor no projeto</th></tr></thead>
+              <tbody>{project.movements.map((movement) => {
+                const status = movementStatus(movement.status);
+                return (
+                  <tr key={movement.id}>
+                    <td>{formatDate(movement.date)}</td>
+                    <td><strong>{movement.description}</strong>{movement.categoryName && <span className="table-secondary">{movement.categoryName}</span>}</td>
+                    <td><Badge tone={movementTone(movement.kind)}>{movementKindLabel(movement.kind)}</Badge></td>
+                    <td><Badge tone={status.tone}>{status.label}</Badge></td>
+                    <td className="numeric"><MovementValue movement={movement} /></td>
+                  </tr>
+                );
+              })}</tbody>
+            </table>
+          </div>
+          <div className="partner-movement-mobile">
+            {project.movements.map((movement) => {
+              const status = movementStatus(movement.status);
+              return (
+                <article className="partner-movement-card" key={movement.id}>
+                  <div className="partner-movement-card-heading"><div><strong>{movement.description}</strong><span>{movement.categoryName ?? movementKindLabel(movement.kind)}</span></div><MovementValue movement={movement} /></div>
+                  <div className="partner-movement-card-meta"><span>{formatDate(movement.date)}</span><Badge tone={movementTone(movement.kind)}>{movementKindLabel(movement.kind)}</Badge><Badge tone={status.tone}>{status.label}</Badge></div>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 export function PartnerReport({ initialData, displayName }: { initialData: PartnerReportData; displayName: string }) {
   const [report, setReport] = useState(initialData);
   const [selectedProjectId, setSelectedProjectId] = useState("all");
@@ -191,6 +270,7 @@ export function PartnerReport({ initialData, displayName }: { initialData: Partn
           <ProjectTable projects={visibleProjects} />
           <ProjectCards projects={visibleProjects} />
           {selectedProject && <FinancialBreakdown project={selectedProject} />}
+          {visibleProjects.map((project) => <ProjectMovements key={project.id} project={project} />)}
         </>
       )}
     </section>
