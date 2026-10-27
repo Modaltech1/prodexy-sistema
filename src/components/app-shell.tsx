@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   CalendarDays, FolderKanban, ListTodo, WalletCards, Gauge, ReceiptText, GitCompareArrows,
   Split, HandCoins, LockKeyhole, Sheet, Target, UsersRound, BriefcaseBusiness, Settings,
-  ChevronDown, Menu, X, type LucideIcon
+  ChevronDown, Menu, X, Database, PanelLeftClose, PanelLeftOpen, type LucideIcon
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { GlobalSearch } from "./global-search";
@@ -30,6 +30,7 @@ const finance = [
 ];
 
 const secondary = [
+  { href: "/infraestrutura/bancos", label: "Bancos", icon: Database },
   { href: "/metas", label: "Metas", icon: Target },
   { href: "/clientes", label: "Clientes", icon: UsersRound },
   { href: "/comercial", label: "Comercial", icon: BriefcaseBusiness },
@@ -39,13 +40,15 @@ const secondary = [
 function NavItem({ href, label, icon: Icon, exact = false, onClick }: { href: string; label: string; icon: LucideIcon; exact?: boolean; onClick?: () => void }) {
   const pathname = usePathname();
   const active = exact ? pathname === href : (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`));
-  return <Link href={href} onClick={onClick} className={`nav-item ${active ? "active" : ""}`}><Icon size={17}/><span>{label}</span></Link>;
+  return <Link href={href} onClick={onClick} title={label} className={`nav-item ${active ? "active" : ""}`}><Icon size={17}/><span>{label}</span></Link>;
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [financeOpen, setFinanceOpen] = useState(pathname.startsWith("/financeiro"));
+  const isDatabaseExplorer = pathname.startsWith("/infraestrutura/bancos");
+  const [compactSidebar, setCompactSidebar] = useState(isDatabaseExplorer);
   const close = () => setMobileOpen(false);
 
   if (pathname === "/login" || pathname === "/alterar-senha" || pathname.startsWith("/portal")) {
@@ -57,7 +60,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <nav>
       <div className="nav-group">{primary.map((item) => <NavItem {...item} key={item.href} onClick={close}/>)}</div>
       <div className="nav-group">
-        <button className={`nav-section-button ${pathname.startsWith("/financeiro") ? "active" : ""}`} onClick={() => setFinanceOpen((v) => !v)}><WalletCards size={17}/><span>Financeiro</span><ChevronDown size={15} className={financeOpen ? "rotated" : ""}/></button>
+        <button className={`nav-section-button ${pathname.startsWith("/financeiro") ? "active" : ""}`} title="Financeiro" aria-label="Financeiro" onClick={() => setFinanceOpen((v) => !v)}><WalletCards size={17}/><span>Financeiro</span><ChevronDown size={15} className={financeOpen ? "rotated" : ""}/></button>
         {financeOpen && <div className="nav-subitems">{finance.map((item) => <NavItem {...item} key={item.href} exact={item.href === "/financeiro"} onClick={close}/>)}</div>}
       </div>
       <div className="nav-group">{secondary.map((item) => <NavItem {...item} key={item.href} onClick={close}/>)}</div>
@@ -68,10 +71,18 @@ export function AppShell({ children }: { children: ReactNode }) {
   return <div className="app-shell">
     <div className={`mobile-sidebar ${mobileOpen ? "open" : ""}`}><div className="mobile-close"><button onClick={close}><X size={20}/></button></div>{sidebar}</div>
     {mobileOpen && <button className="mobile-backdrop" onClick={close} aria-label="Fechar menu"/>}
-    <div className="desktop-sidebar">{sidebar}</div>
-    <div className="app-main">
-      <header className="topbar"><button className="mobile-menu" onClick={() => setMobileOpen(true)}><Menu size={20}/></button><GlobalSearch/><QuickAdd/></header>
-      <main className="content">{children}</main>
+    <div className={`desktop-sidebar ${compactSidebar ? "compact" : ""}`}>{sidebar}</div>
+    <div className={`app-main ${compactSidebar ? "compact-sidebar" : ""}`}>
+      <header className="topbar">
+        <button className="mobile-menu" onClick={() => setMobileOpen(true)} aria-label="Abrir menu"><Menu size={20}/></button>
+        <button className="desktop-sidebar-toggle" type="button" onClick={() => setCompactSidebar((value) => !value)} aria-label={compactSidebar ? "Expandir menu lateral" : "Recolher menu lateral"} title={compactSidebar ? "Expandir menu lateral" : "Recolher menu lateral"}>
+          {compactSidebar ? <PanelLeftOpen size={19}/> : <PanelLeftClose size={19}/>}
+        </button>
+        {isDatabaseExplorer ? <>
+          <strong className="dbx-topbar-title">Infraestrutura <span>/</span> Bancos</strong>
+        </> : <><GlobalSearch/><QuickAdd/></>}
+      </header>
+      <main className={`content ${isDatabaseExplorer ? "content--database" : ""}`}>{children}</main>
     </div>
   </div>;
 }

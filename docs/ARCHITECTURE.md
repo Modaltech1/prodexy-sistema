@@ -97,4 +97,8 @@ Demandas ficam em uma estrutura única, com projeto/cliente opcionais. O planeja
 
 ## Evolução futura
 
+### Explorador administrativo de bancos
+
+`/infraestrutura/bancos` usa inventário explícito e não secreto; uma linha financeira em `projects` não cria integração. Cada database possui registro server-side, referência própria de credencial e política de tabelas/colunas. O adapter `pg` usa TLS verificado, pool máximo 1, timeouts e transação read-only; a role PostgreSQL também é somente leitura. Catálogo, migrations, tamanhos, estimativas e linhas paginadas usam queries controladas, sem SQL livre, escrita ou `COUNT(*)` indiscriminado. A API exige Auth habilitado e `requireAdmin()`. O PH é a primeira integração; novos projetos seguem onboarding explícito no [procedimento operacional](DATABASE_EXPLORER_OPERATIONS.md).
+
 As integrações com Stripe, Cora, AWS, Vercel e Supabase Billing devem escrever/conciliar as mesmas entidades de domínio, em vez de criar módulos financeiros paralelos. Assim uma transação continua sendo uma transação independentemente da origem `manual`, `import`, `recurrence` ou `integration`.

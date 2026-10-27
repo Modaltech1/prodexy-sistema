@@ -2,6 +2,10 @@
 
 Sistema interno de gestão da Prodexy Labs: financeiro por projeto, custos compartilhados, sociedade/distribuição de lucro, fechamentos mensais, metas, clientes/SaaS, demandas, tempo e pipeline comercial.
 
+## Explorador de bancos
+
+A rota administrativa `/infraestrutura/bancos` consulta estrutura, migrations, consumo aproximado e linhas paginadas dos databases explicitamente integrados, começando pelo PH Outlet. O acesso é server-side, somente leitura, com role própria e colunas autorizadas por projeto. A API exige administrador ativo e não oferece SQL livre ou escrita. Veja o [ExecPlan](docs/prodexy/plans/2026-10-25-explorador-bancos.md) e o [procedimento operacional](docs/DATABASE_EXPLORER_OPERATIONS.md).
+
 ## Stack
 
 - Next.js + React + TypeScript
