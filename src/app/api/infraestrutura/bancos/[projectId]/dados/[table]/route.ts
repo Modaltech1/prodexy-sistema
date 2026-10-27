@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/auth/access";
 import { authEnabled } from "@/lib/auth/config";
 import { serverError } from "@/lib/api";
 import { getRegisteredDatabaseProject } from "@/features/database-explorer/registry";
-import { isDatabaseObserverConfigured, readDatabaseTableRows } from "@/features/database-explorer/server/catalog";
+import { isDatabaseExplorerConfigured, readDatabaseTableRows } from "@/features/database-explorer/server/catalog";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,8 +24,8 @@ export async function GET(request: Request, context: RouteContext<"/api/infraest
   if (!getRegisteredDatabaseProject(projectId)) {
     return NextResponse.json({ error: "Banco não registrado." }, { status: 404, headers: privateHeaders });
   }
-  if (!isDatabaseObserverConfigured(projectId)) {
-    return NextResponse.json({ error: "Acesso de observação ainda não configurado." }, { status: 503, headers: privateHeaders });
+  if (!isDatabaseExplorerConfigured(projectId)) {
+    return NextResponse.json({ error: "Credencial do banco ainda não configurada." }, { status: 503, headers: privateHeaders });
   }
 
   const url = new URL(request.url);

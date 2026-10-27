@@ -74,3 +74,17 @@ export type DatabaseRows = {
   filterColumn: string | null;
   filterOperator: "contains" | "equals";
 };
+
+export type SqlResultSet = {
+  command: string;
+  rowCount: number | null;
+  columns: string[];
+  rows: Record<string, unknown>[];
+};
+
+export type SqlExecutionResponse = {
+  projectId: string;
+  databaseName: string;
+  durationMs: number;
+  results: SqlResultSet[];
+};

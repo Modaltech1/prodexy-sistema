@@ -4,6 +4,7 @@ import { getRegisteredDatabaseProject, getRegisteredDatabaseProjects } from "../
 import { assembleCatalog, catalogQueries } from "../src/features/database-explorer/catalog.ts";
 import { buildDataQuery } from "../src/features/database-explorer/data-query.ts";
 import { getTableDataPolicy } from "../src/features/database-explorer/data-policy.ts";
+import { requiresSqlConfirmation } from "../src/features/database-explorer/sql-editor.ts";
 
 test("registra PH sem fingir que o banco já está conectado", () => {
   const { projects } = getRegisteredDatabaseProjects();
@@ -112,4 +113,12 @@ test("consultas do catálogo são fixas e não incluem dados de negócio", () =>
     if (name !== "migrations") assert.match(query, /pg_catalog\./);
     assert.doesNotMatch(query, /\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bDROP\b/i);
   }
+});
+
+test("SQL Editor confirma comandos de alteração e executa leitura diretamente", () => {
+  assert.equal(requiresSqlConfirmation("SELECT * FROM public.lojas"), false);
+  assert.equal(requiresSqlConfirmation("SHOW statement_timeout"), false);
+  assert.equal(requiresSqlConfirmation("EXPLAIN SELECT 1"), false);
+  assert.equal(requiresSqlConfirmation("ALTER TABLE public.lojas ADD COLUMN teste text"), true);
+  assert.equal(requiresSqlConfirmation("BEGIN; UPDATE public.lojas SET ativa = true; COMMIT;"), true);
 });

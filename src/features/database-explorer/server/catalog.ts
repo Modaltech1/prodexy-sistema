@@ -19,8 +19,8 @@ const integrations: Record<string, ServerIntegration> = {
     projectId: "ph-outlet",
     host: "db01.prodexylabs.com",
     database: "prodexy_ph_outlet",
-    user: "prodexy_sistema_ph_observer",
-    passwordReference: "PRODEXY_SISTEMA_PH_OBSERVER_DB_PASSWORD",
+    user: "prodexy_sistema_sql_executor",
+    passwordReference: "PRODEXY_SISTEMA_SQL_EXECUTOR_DB_PASSWORD",
   },
 };
 
@@ -30,14 +30,14 @@ function getIntegration(projectId: string) {
   return integrations[projectId] ?? null;
 }
 
-export function isDatabaseObserverConfigured(projectId: string) {
+export function isDatabaseExplorerConfigured(projectId: string) {
   const integration = getIntegration(projectId);
   return Boolean(integration && process.env[integration.passwordReference]);
 }
 
 function getPool(integration: ServerIntegration): Pool {
   const password = process.env[integration.passwordReference];
-  if (!password) throw new Error("PH_OBSERVER_NOT_CONFIGURED");
+  if (!password) throw new Error("DATABASE_EXPLORER_NOT_CONFIGURED");
   const pools = poolStore.prodexyDatabaseExplorerPools ?? new Map<string, Pool>();
   poolStore.prodexyDatabaseExplorerPools = pools;
   let pool = pools.get(integration.projectId);

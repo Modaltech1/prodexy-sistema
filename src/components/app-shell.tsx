@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   CalendarDays, FolderKanban, ListTodo, WalletCards, Gauge, ReceiptText, GitCompareArrows,
   Split, HandCoins, LockKeyhole, Sheet, Target, UsersRound, BriefcaseBusiness, Settings,
-  ChevronDown, Menu, X, Database, PanelLeftClose, PanelLeftOpen, type LucideIcon
+  ChevronDown, Menu, X, Database, PanelLeftClose, PanelLeftOpen, SquareTerminal, type LucideIcon
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { GlobalSearch } from "./global-search";
@@ -29,8 +29,12 @@ const finance = [
   { href: "/financeiro/conferencia", label: "Conferência", icon: Sheet },
 ];
 
+const databases = [
+  { href: "/infraestrutura/bancos", label: "Explorador", icon: Database },
+  { href: "/infraestrutura/sql", label: "SQL Editor", icon: SquareTerminal },
+];
+
 const secondary = [
-  { href: "/infraestrutura/bancos", label: "Bancos", icon: Database },
   { href: "/metas", label: "Metas", icon: Target },
   { href: "/clientes", label: "Clientes", icon: UsersRound },
   { href: "/comercial", label: "Comercial", icon: BriefcaseBusiness },
@@ -47,8 +51,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [financeOpen, setFinanceOpen] = useState(pathname.startsWith("/financeiro"));
+  const [databasesOpen, setDatabasesOpen] = useState(pathname.startsWith("/infraestrutura"));
   const isDatabaseExplorer = pathname.startsWith("/infraestrutura/bancos");
-  const [compactSidebar, setCompactSidebar] = useState(isDatabaseExplorer);
+  const isSqlEditor = pathname.startsWith("/infraestrutura/sql");
+  const isInfrastructureTool = isDatabaseExplorer || isSqlEditor;
+  const [compactSidebar, setCompactSidebar] = useState(isInfrastructureTool);
   const close = () => setMobileOpen(false);
 
   if (pathname === "/login" || pathname === "/alterar-senha" || pathname.startsWith("/portal")) {
@@ -62,6 +69,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="nav-group">
         <button className={`nav-section-button ${pathname.startsWith("/financeiro") ? "active" : ""}`} title="Financeiro" aria-label="Financeiro" onClick={() => setFinanceOpen((v) => !v)}><WalletCards size={17}/><span>Financeiro</span><ChevronDown size={15} className={financeOpen ? "rotated" : ""}/></button>
         {financeOpen && <div className="nav-subitems">{finance.map((item) => <NavItem {...item} key={item.href} exact={item.href === "/financeiro"} onClick={close}/>)}</div>}
+      </div>
+      <div className="nav-group">
+        <button className={`nav-section-button ${pathname.startsWith("/infraestrutura") ? "active" : ""}`} title="Banco de dados" aria-label="Banco de dados" onClick={() => setDatabasesOpen((value) => !value)}><Database size={17}/><span>Banco de dados</span><ChevronDown size={15} className={databasesOpen ? "rotated" : ""}/></button>
+        {databasesOpen && <div className="nav-subitems">{databases.map((item) => <NavItem {...item} key={item.href} onClick={close}/>)}</div>}
       </div>
       <div className="nav-group">{secondary.map((item) => <NavItem {...item} key={item.href} onClick={close}/>)}</div>
     </nav>
@@ -78,11 +89,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         <button className="desktop-sidebar-toggle" type="button" onClick={() => setCompactSidebar((value) => !value)} aria-label={compactSidebar ? "Expandir menu lateral" : "Recolher menu lateral"} title={compactSidebar ? "Expandir menu lateral" : "Recolher menu lateral"}>
           {compactSidebar ? <PanelLeftOpen size={19}/> : <PanelLeftClose size={19}/>}
         </button>
-        {isDatabaseExplorer ? <>
-          <strong className="dbx-topbar-title">Infraestrutura <span>/</span> Bancos</strong>
+        {isInfrastructureTool ? <>
+          <strong className="dbx-topbar-title">Infraestrutura <span>/</span> {isSqlEditor ? "SQL Editor" : "Bancos"}</strong>
         </> : <><GlobalSearch/><QuickAdd/></>}
       </header>
-      <main className={`content ${isDatabaseExplorer ? "content--database" : ""}`}>{children}</main>
+      <main className={`content ${isInfrastructureTool ? "content--database" : ""}`}>{children}</main>
     </div>
   </div>;
 }
