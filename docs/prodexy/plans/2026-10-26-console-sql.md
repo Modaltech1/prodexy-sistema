@@ -2,7 +2,7 @@
 
 ## Status
 
-IN_PROGRESS
+COMPLETE
 
 ## Standard version
 
@@ -10,7 +10,7 @@ IN_PROGRESS
 
 ## Bloco atual
 
-S2 — INFRAESTRUTURA CONCLUÍDA — publicação e smoke test da aplicação pendentes com o responsável.
+S2 — VALIDADO — encerrado pelo responsável em 2026-10-27.
 
 ## Motivação
 
@@ -83,10 +83,10 @@ Permitir que o responsável execute consultas e migrations dos databases registr
 - [x] Responsável criou `prodexy_sistema_sql_executor`, configurou SCRAM/LOGIN, autorizou o PH e transferiu o controle dos objetos públicos existentes; pós-check validado em 2026-10-27.
 - [x] Código consolidado para a mesma role no Explorador e no SQL Editor; remoção de `prodexy_sistema_ph_observer` autorizada em 2026-10-27.
 - [x] Responsável removeu a regra HBA e a role `prodexy_sistema_ph_observer`; ausência final e serviço ativo confirmados em 2026-10-27.
-- [ ] Responsável configura `PRODEXY_SISTEMA_SQL_EXECUTOR_DB_PASSWORD` no runtime local e na Vercel.
-- [ ] Validar conexão TLS e execução real pelo Console SQL.
-- [ ] Atualizar primeiro `RESOURCE_REGISTRY.md`, depois `BUILD_LEDGER.md`.
-- [ ] Validação final do responsável.
+- [x] Responsável configurou `PRODEXY_SISTEMA_SQL_EXECUTOR_DB_PASSWORD` nos runtimes aplicáveis.
+- [x] Conexão TLS e execução real pelo Console SQL validadas pelo responsável.
+- [x] `RESOURCE_REGISTRY.md` atualizado antes de `BUILD_LEDGER.md`.
+- [x] Validação final do responsável recebida em 2026-10-27.
 
 ## Migrations e dados
 
@@ -134,6 +134,8 @@ Nenhuma para S1.
 
 2026-10-27 — Responsável confirmou a remoção bem-sucedida da role e da regra HBA antigas. Registry atualizado antes do ledger. O bloco de infraestrutura está concluído; publicação e smoke test das duas telas permanecem sob responsabilidade do operador.
 
+2026-10-27 — Responsável considerou concluídos os testes finais de S2. SQL Editor homologado como canal padrão de aplicação manual de migrations nos databases cadastrados; SSM permanece somente como fallback de infraestrutura.
+
 ## Resultado final
 
-Pendente até S2 e aceite final.
+S2 concluído e aceito em 2026-10-27.

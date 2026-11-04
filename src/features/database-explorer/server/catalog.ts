@@ -106,6 +106,8 @@ export async function readDatabaseTableRows(projectId: string, schema: string, t
       schema,
       table,
       columns: [...policy.columns],
+      keyColumns: [...policy.keyColumns],
+      deleteEnabled: policy.deleteEnabled,
       rows: result.rows.slice(0, query.pageSize),
       page: query.page,
       pageSize: query.pageSize,

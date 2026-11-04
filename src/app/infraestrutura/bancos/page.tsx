@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Columns3, Database, Info, LockKeyhole, Search, Table2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, Columns3, Database, Info, LockKeyhole, PanelLeftClose, PanelLeftOpen, Search, Table2, Trash2 } from "lucide-react";
 import { apiFetch } from "@/lib/client-api";
 import type { DatabaseCatalog, DatabaseInventoryResponse, DatabaseProject, DatabaseRows, DatabaseTable } from "@/features/database-explorer/contracts";
 
@@ -42,7 +42,17 @@ function formatCell(value: unknown) {
   return String(value);
 }
 
-function TableData({ data, loading, error, searchDraft, filterColumn, filterOperator, onSearchDraft, onFilterColumn, onFilterOperator, onSearch, onPage, onSort }: {
+function SelectAllCheckbox({ checked, indeterminate, disabled, onChange }: { checked: boolean; indeterminate: boolean; disabled: boolean; onChange: () => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (ref.current) ref.current.indeterminate = indeterminate; }, [indeterminate]);
+  return <input ref={ref} type="checkbox" checked={checked} disabled={disabled} onChange={onChange} aria-label="Selecionar todas as linhas desta página"/>;
+}
+
+function rowIdentity(row: Record<string, unknown>, keyColumns: readonly string[]) {
+  return JSON.stringify(keyColumns.map((column) => row[column]));
+}
+
+function TableData({ data, loading, error, searchDraft, filterColumn, filterOperator, onSearchDraft, onFilterColumn, onFilterOperator, onSearch, onPage, onSort, onDelete }: {
   data: DatabaseRows | null;
   loading: boolean;
   error: string | null;
@@ -55,11 +65,49 @@ function TableData({ data, loading, error, searchDraft, filterColumn, filterOper
   onSearch: (value: string) => void;
   onPage: (page: number) => void;
   onSort: (column: string) => void;
+  onDelete: (rows: Record<string, unknown>[]) => Promise<void>;
 }) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const rowKeys = data?.rows.map((row) => rowIdentity(row, data.keyColumns)) ?? [];
+  const selectedRows = data?.rows.filter((row) => selected.has(rowIdentity(row, data.keyColumns))) ?? [];
+  const allSelected = rowKeys.length > 0 && rowKeys.every((key) => selected.has(key));
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(rowKeys));
+  }
+
+  function toggleRow(key: string) {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  async function deleteSelected() {
+    if (!data || !selectedRows.length) return;
+    const label = selectedRows.length === 1 ? "esta linha" : `estas ${selectedRows.length} linhas`;
+    if (!window.confirm(`Excluir permanentemente ${label} de ${data.table}?`)) return;
+    setDeleting(true);
+    setActionError(null);
+    try {
+      await onDelete(selectedRows);
+      setSelected(new Set());
+    } catch (cause) {
+      setActionError(cause instanceof Error ? cause.message : "Não foi possível excluir as linhas.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return <div className="dbx-data-view">
-    <form className="dbx-data-toolbar" onSubmit={(event) => { event.preventDefault(); onSearch(searchDraft); }}><div className="dbx-filter-builder"><select aria-label="Coluna do filtro" value={filterColumn} onChange={(event) => onFilterColumn(event.target.value)}><option value="">Campos pesquisáveis</option>{data?.columns.map((column) => <option value={column} key={column}>{column}</option>)}</select><select aria-label="Operador do filtro" value={filterOperator} onChange={(event) => onFilterOperator(event.target.value as "contains" | "equals")}><option value="contains">contém</option><option value="equals">é igual a</option></select><label><Search size={15}/><span className="sr-only">Valor do filtro</span><input value={searchDraft} onChange={(event) => onSearchDraft(event.target.value)} placeholder="Digite um valor" maxLength={100}/></label></div><button type="submit">Aplicar</button>{searchDraft ? <button type="button" className="secondary" onClick={() => { onSearchDraft(""); onSearch(""); }}>Limpar</button> : null}<span>{data ? `${data.rows.length} linhas nesta página` : ""}</span></form>
+    {selectedRows.length ? <div className="dbx-selection-toolbar"><strong>{selectedRows.length} {selectedRows.length === 1 ? "linha selecionada" : "linhas selecionadas"}</strong><button type="button" className="danger" disabled={deleting} onClick={deleteSelected}><Trash2 size={14}/>{deleting ? "Excluindo…" : `Excluir ${selectedRows.length}`}</button></div> : <form className="dbx-data-toolbar" onSubmit={(event) => { event.preventDefault(); onSearch(searchDraft); }}><div className="dbx-filter-builder"><select aria-label="Coluna do filtro" value={filterColumn} onChange={(event) => onFilterColumn(event.target.value)}><option value="">Campos pesquisáveis</option>{data?.columns.map((column) => <option value={column} key={column}>{column}</option>)}</select><select aria-label="Operador do filtro" value={filterOperator} onChange={(event) => onFilterOperator(event.target.value as "contains" | "equals")}><option value="contains">contém</option><option value="equals">é igual a</option></select><label><Search size={15}/><span className="sr-only">Valor do filtro</span><input value={searchDraft} onChange={(event) => onSearchDraft(event.target.value)} placeholder="Digite um valor" maxLength={100}/></label></div><button type="submit">Aplicar</button>{searchDraft ? <button type="button" className="secondary" onClick={() => { onSearchDraft(""); onSearch(""); }}>Limpar</button> : null}<span>{data ? `${data.rows.length} linhas nesta página` : ""}</span></form>}
+    {actionError ? <div className="dbx-action-error" role="alert">{actionError}</div> : null}
     {loading ? <div className="dbx-data-state">Consultando linhas…</div> : error ? <div className="dbx-data-state error" role="alert"><LockKeyhole size={18}/><strong>{error}</strong><span>A estrutura continua disponível. Nenhuma permissão foi ampliada pela interface.</span></div> : data ? <>
-      <div className="dbx-data-grid"><table><thead><tr>{data.columns.map((column) => <th key={column}><button type="button" onClick={() => onSort(column)}>{column}{data.sort === column ? <span>{data.direction === "asc" ? "↑" : "↓"}</span> : null}</button></th>)}</tr></thead><tbody>{data.rows.length ? data.rows.map((row, rowIndex) => <tr key={rowIndex}>{data.columns.map((column) => { const value = formatCell(row[column]); return <td key={column} className={value === "NULL" ? "null" : ""} title={value}>{value}</td>; })}</tr>) : <tr><td className="empty" colSpan={Math.max(data.columns.length, 1)}>Nenhuma linha encontrada.</td></tr>}</tbody></table></div>
+      <div className="dbx-data-grid"><table><thead><tr><th className="dbx-select-cell"><SelectAllCheckbox checked={allSelected} indeterminate={selected.size > 0 && !allSelected} disabled={!data.deleteEnabled || !data.rows.length} onChange={toggleAll}/></th>{data.columns.map((column) => <th key={column}><button type="button" onClick={() => onSort(column)}>{column}{data.sort === column ? <span>{data.direction === "asc" ? "↑" : "↓"}</span> : null}</button></th>)}</tr></thead><tbody>{data.rows.length ? data.rows.map((row) => { const key = rowIdentity(row, data.keyColumns); return <tr key={key} className={selected.has(key) ? "selected" : ""}><td className="dbx-select-cell"><input type="checkbox" checked={selected.has(key)} disabled={!data.deleteEnabled} onChange={() => toggleRow(key)} aria-label="Selecionar linha"/></td>{data.columns.map((column) => { const value = formatCell(row[column]); return <td key={column} className={value === "NULL" ? "null" : ""} title={value}>{value}</td>; })}</tr>; }) : <tr><td className="empty" colSpan={Math.max(data.columns.length + 1, 1)}>Nenhuma linha encontrada.</td></tr>}</tbody></table></div>
       <div className="dbx-pagination"><button type="button" disabled={data.page <= 1} onClick={() => onPage(data.page - 1)}><ArrowLeft size={14}/>Anterior</button><span>Página {data.page}</span><button type="button" disabled={!data.hasNext} onClick={() => onPage(data.page + 1)}>Próxima<ArrowRight size={14}/></button></div>
     </> : <div className="dbx-data-state">Selecione uma tabela para consultar.</div>}
   </div>;
@@ -85,6 +133,8 @@ export default function ProjectDatabasesPage() {
   const [dataDirection, setDataDirection] = useState<"asc" | "desc">("asc");
   const [dataFilterColumn, setDataFilterColumn] = useState("");
   const [dataFilterOperator, setDataFilterOperator] = useState<"contains" | "equals">("contains");
+  const [dataRevision, setDataRevision] = useState(0);
+  const [tableSidebarCollapsed, setTableSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -133,7 +183,7 @@ export default function ProjectDatabasesPage() {
       .catch((cause: unknown) => { if (active) { setRowData(null); setRowError(cause instanceof Error ? cause.message : "Não foi possível consultar as linhas."); } })
       .finally(() => { if (active) setLoadingRows(false); });
     return () => { active = false; };
-  }, [dataDirection, dataFilterColumn, dataFilterOperator, dataPage, dataSearch, dataSort, selectedId, selectedTableName, tab]);
+  }, [dataDirection, dataFilterColumn, dataFilterOperator, dataPage, dataRevision, dataSearch, dataSort, selectedId, selectedTableName, tab]);
 
   const projects = inventory?.projects ?? [];
   const selected = projects.find((project) => project.id === selectedId) ?? projects[0];
@@ -200,6 +250,19 @@ export default function ProjectDatabasesPage() {
     setDataFilterOperator(operator);
   }
 
+  async function deleteRows(rows: Record<string, unknown>[]) {
+    if (!selectedTableName) return;
+    const [, table] = selectedTableName.split(".", 2);
+    if (!table) return;
+    await apiFetch<{ deleted: number }>(`/api/infraestrutura/bancos/${encodeURIComponent(selectedId)}/dados/${encodeURIComponent(table)}`, {
+      method: "DELETE",
+      body: JSON.stringify({ rows }),
+    });
+    setLoadingRows(true);
+    setRowError(null);
+    setDataRevision((current) => current + 1);
+  }
+
   return <>
     {inventoryError ? <div className="error-box" role="alert">{inventoryError}</div> : null}
     <section className="dbx-workspace dbx-workspace--focused" aria-label="Explorador de bancos">
@@ -208,10 +271,23 @@ export default function ProjectDatabasesPage() {
           <header className="dbx-database-toolbar">
             <label className="dbx-project-picker"><Database size={17} aria-hidden="true"/><span className="sr-only">Projeto e database</span><select value={selected.id} onChange={(event) => selectProject(event.target.value)} aria-label="Projeto e database">{projects.map((project) => <option key={project.id} value={project.id}>{project.projectName} — {project.databaseName}</option>)}</select></label>
             <div className="dbx-database-context"><span>{selected.provider}</span><i aria-hidden="true"/><span>{selected.nodeName}</span>{activeCatalog ? <><i aria-hidden="true"/><span>{formatBytes(activeCatalog.databaseBytes)}</span></> : null}</div>
-            <div className="dbx-database-state"><span className={`dbx-connection ${selected.connectionState}`}>{loadingCatalog ? "Consultando…" : connectionLabel(selected)}</span><span className="dbx-readonly"><LockKeyhole size={13}/>Somente leitura</span></div>
+            <div className="dbx-database-state"><span className={`dbx-connection ${selected.connectionState}`}>{loadingCatalog ? "Consultando…" : connectionLabel(selected)}</span><span className="dbx-readonly"><LockKeyhole size={13}/>Acesso administrativo</span></div>
           </header>
-          {activeCatalog ? <div className="dbx-database-body"><aside className="dbx-table-sidebar" aria-label="Tabelas do banco"><div className="dbx-table-sidebar-heading"><strong>Tabelas</strong><span>{activeCatalog.tables.length}</span></div><label className="dbx-table-search"><Search size={15}/><span className="sr-only">Buscar tabela</span><input value={tableSearch} onChange={(event) => setTableSearch(event.target.value)} placeholder="Buscar tabela"/></label><div className="dbx-table-list">{visibleTables.map((table) => <button key={`${table.schema}.${table.name}`} type="button" className={`dbx-table-item ${selectedTableName === `${table.schema}.${table.name}` ? "active" : ""}`} onClick={() => { setSelectedTableName(`${table.schema}.${table.name}`); setTab("structure"); resetDataView(); }}><Table2 size={15}/><span>{table.name}</span><small>{table.columns.length}</small></button>)}{visibleTables.length === 0 ? <p>Nenhuma tabela encontrada.</p> : null}</div><details className="dbx-migrations"><summary>Migrations <span>{activeCatalog.migrations.length}</span></summary><div className="dbx-migration-list">{activeCatalog.migrations.length ? activeCatalog.migrations.map((migration) => <div key={migration.version}><span>{migration.version}</span><small>{new Date(migration.appliedAt).toLocaleDateString("pt-BR")}</small></div>) : <p>Nenhuma registrada.</p>}</div></details></aside>
-            <div className="dbx-detail" role="tabpanel">{selectedTable ? <><div className="dbx-detail-heading"><div><span>{selectedTable.schema} / {selectedTable.kind === "view" ? "View" : "Tabela"}</span><h3>{selectedTable.name}</h3></div><div className="dbx-detail-controls"><small>{selectedTable.columns.length} colunas · {formatBytes(selectedTable.totalBytes)} · ~{selectedTable.estimatedRows ?? "—"} linhas</small><div className="dbx-tabs" role="tablist" aria-label="Visualização da tabela"><button type="button" role="tab" aria-selected={tab === "data"} className={tab === "data" ? "active" : ""} onClick={() => { if (tab !== "data") { setLoadingRows(true); setRowError(null); setTab("data"); } }}><Table2 size={15}/>Dados</button><button type="button" role="tab" aria-selected={tab === "structure"} className={tab === "structure" ? "active" : ""} onClick={() => setTab("structure")}><Columns3 size={15}/>Estrutura</button></div></div></div>{tab === "structure" ? <TableStructure table={selectedTable}/> : <TableData data={rowData} loading={loadingRows} error={rowError} searchDraft={dataSearchDraft} filterColumn={dataFilterColumn} filterOperator={dataFilterOperator} onSearchDraft={setDataSearchDraft} onFilterColumn={changeFilterColumn} onFilterOperator={changeFilterOperator} onSearch={searchRows} onPage={changeDataPage} onSort={sortRows}/>}</> : <div className="dbx-empty"><div className="dbx-empty-icon"><Table2 size={28}/></div><h3>Selecione uma tabela</h3><p>As tabelas disponíveis aparecem na lista ao lado.</p></div>}</div>
+          {activeCatalog ? <div className={`dbx-database-body ${tableSidebarCollapsed ? "tables-collapsed" : ""}`}>
+            <aside className={`dbx-table-sidebar ${tableSidebarCollapsed ? "collapsed" : ""}`} aria-label="Tabelas do banco">
+              <div className="dbx-table-sidebar-heading">
+                {!tableSidebarCollapsed ? <><strong>Tabelas</strong><span>{activeCatalog.tables.length}</span></> : null}
+                <button type="button" className="dbx-tables-toggle" onClick={() => setTableSidebarCollapsed((current) => !current)} aria-label={tableSidebarCollapsed ? "Expandir lista de tabelas" : "Recolher lista de tabelas"} title={tableSidebarCollapsed ? "Expandir tabelas" : "Recolher tabelas"}>
+                  {tableSidebarCollapsed ? <PanelLeftOpen size={17}/> : <PanelLeftClose size={17}/>}
+                </button>
+              </div>
+              {!tableSidebarCollapsed ? <>
+                <label className="dbx-table-search"><Search size={15}/><span className="sr-only">Buscar tabela</span><input value={tableSearch} onChange={(event) => setTableSearch(event.target.value)} placeholder="Buscar tabela"/></label>
+                <div className="dbx-table-list">{visibleTables.map((table) => <button key={`${table.schema}.${table.name}`} type="button" className={`dbx-table-item ${selectedTableName === `${table.schema}.${table.name}` ? "active" : ""}`} onClick={() => { setSelectedTableName(`${table.schema}.${table.name}`); setTab("structure"); resetDataView(); }}><Table2 size={15}/><span>{table.name}</span><small>{table.columns.length}</small></button>)}{visibleTables.length === 0 ? <p>Nenhuma tabela encontrada.</p> : null}</div>
+                <details className="dbx-migrations"><summary>Migrations <span>{activeCatalog.migrations.length}</span></summary><div className="dbx-migration-list">{activeCatalog.migrations.length ? activeCatalog.migrations.map((migration) => <div key={migration.version}><span>{migration.version}</span><small>{new Date(migration.appliedAt).toLocaleDateString("pt-BR")}</small></div>) : <p>Nenhuma registrada.</p>}</div></details>
+              </> : null}
+            </aside>
+            <div className="dbx-detail" role="tabpanel">{selectedTable ? <><div className="dbx-detail-heading"><div><span>{selectedTable.schema} / {selectedTable.kind === "view" ? "View" : "Tabela"}</span><h3>{selectedTable.name}</h3></div><div className="dbx-detail-controls"><small>{selectedTable.columns.length} colunas · {formatBytes(selectedTable.totalBytes)} · ~{selectedTable.estimatedRows ?? "—"} linhas</small><div className="dbx-tabs" role="tablist" aria-label="Visualização da tabela"><button type="button" role="tab" aria-selected={tab === "data"} className={tab === "data" ? "active" : ""} onClick={() => { if (tab !== "data") { setLoadingRows(true); setRowError(null); setTab("data"); } }}><Table2 size={15}/>Dados</button><button type="button" role="tab" aria-selected={tab === "structure"} className={tab === "structure" ? "active" : ""} onClick={() => setTab("structure")}><Columns3 size={15}/>Estrutura</button></div></div></div>{tab === "structure" ? <TableStructure table={selectedTable}/> : <TableData key={`${selectedTableName}-${dataPage}-${dataSearch}-${dataSort}-${dataDirection}-${dataRevision}`} data={rowData} loading={loadingRows} error={rowError} searchDraft={dataSearchDraft} filterColumn={dataFilterColumn} filterOperator={dataFilterOperator} onSearchDraft={setDataSearchDraft} onFilterColumn={changeFilterColumn} onFilterOperator={changeFilterOperator} onSearch={searchRows} onPage={changeDataPage} onSort={sortRows} onDelete={deleteRows}/>}</> : <div className="dbx-empty"><div className="dbx-empty-icon"><Table2 size={28}/></div><h3>Selecione uma tabela</h3><p>As tabelas disponíveis aparecem na lista ao lado.</p></div>}</div>
           </div> : <div className="dbx-empty" role="tabpanel"><div className="dbx-empty-icon">{loadingCatalog ? <Database size={28}/> : <Info size={28}/>}</div><h3>{loadingCatalog ? "Consultando estrutura…" : "Estrutura ainda indisponível"}</h3><p>{catalogError || "A credencial administrativa do banco ainda não foi configurada. Nenhuma tabela foi consultada."}</p>{!loadingCatalog ? <div className="dbx-empty-note"><Info size={17} aria-hidden="true"/>O explorador reutiliza a conexão administrativa da plataforma, sempre em sessão somente leitura.</div> : null}</div>}
         </> : <div className="dbx-empty"><div className="dbx-empty-icon"><Database size={28}/></div><h3>Selecione um projeto</h3><p>O inventário aparecerá aqui quando estiver disponível.</p></div>}
       </div>

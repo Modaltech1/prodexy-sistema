@@ -2,6 +2,8 @@ import "server-only";
 import { attachDatabasePool } from "@vercel/functions";
 import { Pool, type QueryResult } from "pg";
 import type { SqlExecutionResponse, SqlResultSet } from "../contracts";
+import { getTableDataPolicy } from "../data-policy";
+import { buildDeleteRowsQuery, type RowIdentity } from "../row-actions";
 
 type SqlIntegration = {
   projectId: string;
@@ -76,4 +78,14 @@ export async function executeSql(projectId: string, sql: string): Promise<SqlExe
     durationMs: Math.round(performance.now() - startedAt),
     results: resultSets,
   };
+}
+
+export async function deleteDatabaseRows(projectId: string, schema: string, table: string, rows: readonly RowIdentity[]) {
+  const integration = integrations[projectId];
+  if (!integration) return null;
+  const policy = getTableDataPolicy(projectId, schema, table);
+  if (!policy) return null;
+  const query = buildDeleteRowsQuery(policy, rows);
+  const result = await getPool(integration).query(query.text, query.values);
+  return { deleted: result.rowCount ?? 0 };
 }

@@ -5,6 +5,7 @@ import { assembleCatalog, catalogQueries } from "../src/features/database-explor
 import { buildDataQuery } from "../src/features/database-explorer/data-query.ts";
 import { getTableDataPolicy } from "../src/features/database-explorer/data-policy.ts";
 import { requiresSqlConfirmation } from "../src/features/database-explorer/sql-editor.ts";
+import { buildDeleteRowsQuery } from "../src/features/database-explorer/row-actions.ts";
 
 test("registra PH sem fingir que o banco já está conectado", () => {
   const { projects } = getRegisteredDatabaseProjects();
@@ -105,6 +106,27 @@ test("filtro estruturado aceita somente coluna liberada e operador conhecido", (
   const blocked = buildDataQuery(policy, { search: "abc", filterColumn: "sub_cognito", filterOperator: "equals" });
   assert.equal(blocked.filterColumn, null);
   assert.doesNotMatch(blocked.text, /sub_cognito/);
+});
+
+test("exclusão usa somente as chaves declaradas e parâmetros SQL", () => {
+  const policy = getTableDataPolicy("ph-outlet", "public", "usuarios_lojas");
+  assert.ok(policy);
+  const query = buildDeleteRowsQuery(policy, [
+    { usuario_id: "user-1", loja_id: "loja-1", ativo: true },
+    { usuario_id: "user-2", loja_id: "loja-2", ativo: false },
+  ]);
+  assert.equal(query.text, 'DELETE FROM "public"."usuarios_lojas" WHERE ("usuario_id" = $1 AND "loja_id" = $2) OR ("usuario_id" = $3 AND "loja_id" = $4) RETURNING "usuario_id", "loja_id"');
+  assert.deepEqual(query.values, ["user-1", "loja-1", "user-2", "loja-2"]);
+  assert.doesNotMatch(query.text, /ativo/);
+});
+
+test("exclusão bloqueia tabela de migrations e identidade incompleta", () => {
+  const migrations = getTableDataPolicy("ph-outlet", "public", "migracoes_schema");
+  const links = getTableDataPolicy("ph-outlet", "public", "usuarios_lojas");
+  assert.ok(migrations);
+  assert.ok(links);
+  assert.throws(() => buildDeleteRowsQuery(migrations, [{ versao: "2026" }]), /DELETE_NOT_ALLOWED/);
+  assert.throws(() => buildDeleteRowsQuery(links, [{ usuario_id: "user-1" }]), /INVALID_ROW_IDENTITY/);
 });
 
 test("consultas do catálogo são fixas e não incluem dados de negócio", () => {

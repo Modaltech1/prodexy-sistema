@@ -16,6 +16,7 @@ O PH está integrado ao Prodexy Sistema. O Explorador e o SQL Editor usam a mesm
 
 - `/infraestrutura/bancos`: catálogo e dados; a conexão força `default_transaction_read_only=on`.
 - `/infraestrutura/sql`: SQL administrativo informado pelo responsável.
+- Migrations dos databases cadastrados são aplicadas manualmente pelo responsável em `/infraestrutura/sql`; o projeto fornece o arquivo SQL e o pós-check.
 - A role runtime `prodexy_ph_outlet_app` continua exclusiva da aplicação PH.
 - A role antiga `prodexy_sistema_ph_observer` foi substituída e deve permanecer ausente após a remoção operacional autorizada.
 
@@ -28,3 +29,5 @@ O PH está integrado ao Prodexy Sistema. O Explorador e o SQL Editor usam a mesm
 5. Registrar primeiro no `RESOURCE_REGISTRY.md` e depois no `BUILD_LEDGER.md`.
 
 Cada database mantém sua própria role runtime. Não é necessária uma nova role de observação para cada projeto.
+
+SSM não faz parte do fluxo normal de migrations. Ele permanece como fallback quando o SQL Editor estiver indisponível ou quando a operação envolver infraestrutura fora do escopo do editor.

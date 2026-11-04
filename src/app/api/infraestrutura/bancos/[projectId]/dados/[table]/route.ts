@@ -4,6 +4,7 @@ import { authEnabled } from "@/lib/auth/config";
 import { serverError } from "@/lib/api";
 import { getRegisteredDatabaseProject } from "@/features/database-explorer/registry";
 import { isDatabaseExplorerConfigured, readDatabaseTableRows } from "@/features/database-explorer/server/catalog";
+import { deleteDatabaseRows, isSqlExecutorConfigured } from "@/features/database-explorer/server/sql-executor";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -49,5 +50,42 @@ export async function GET(request: Request, context: RouteContext<"/api/infraest
       return NextResponse.json({ error: "Leitura de dados ainda não autorizada para esta tabela." }, { status: 403, headers: privateHeaders });
     }
     return NextResponse.json({ error: "Não foi possível consultar as linhas agora." }, { status: 503, headers: privateHeaders });
+  }
+}
+
+export async function DELETE(request: Request, context: RouteContext<"/api/infraestrutura/bancos/[projectId]/dados/[table]">) {
+  if (!authEnabled) {
+    return NextResponse.json({ error: "Habilite o login administrativo para excluir linhas." }, { status: 403, headers: privateHeaders });
+  }
+  try {
+    await requireAdmin();
+  } catch (error) {
+    return serverError(error);
+  }
+
+  const { projectId, table } = await context.params;
+  if (!getRegisteredDatabaseProject(projectId)) {
+    return NextResponse.json({ error: "Banco não registrado." }, { status: 404, headers: privateHeaders });
+  }
+  if (!isSqlExecutorConfigured(projectId)) {
+    return NextResponse.json({ error: "Configure a credencial do SQL Executor para este ambiente." }, { status: 503, headers: privateHeaders });
+  }
+
+  const body = await request.json().catch(() => null) as { rows?: unknown } | null;
+  if (!Array.isArray(body?.rows)) {
+    return NextResponse.json({ error: "Seleção de linhas inválida." }, { status: 400, headers: privateHeaders });
+  }
+
+  try {
+    const result = await deleteDatabaseRows(projectId, "public", table, body.rows as Record<string, unknown>[]);
+    if (!result) return NextResponse.json({ error: "Tabela sem política de dados." }, { status: 404, headers: privateHeaders });
+    return NextResponse.json({ data: result }, { headers: privateHeaders });
+  } catch (error) {
+    const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
+    if (code === "23503") return NextResponse.json({ error: "Não foi possível excluir: existem registros vinculados a esta linha." }, { status: 409, headers: privateHeaders });
+    const message = error instanceof Error && error.message === "DELETE_NOT_ALLOWED"
+      ? "A exclusão não está disponível para esta tabela."
+      : "Não foi possível excluir as linhas selecionadas.";
+    return NextResponse.json({ error: message }, { status: 400, headers: privateHeaders });
   }
 }

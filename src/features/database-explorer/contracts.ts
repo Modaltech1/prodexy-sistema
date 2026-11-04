@@ -64,6 +64,8 @@ export type DatabaseRows = {
   schema: string;
   table: string;
   columns: string[];
+  keyColumns: string[];
+  deleteEnabled: boolean;
   rows: Record<string, unknown>[];
   page: number;
   pageSize: number;

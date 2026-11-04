@@ -411,7 +411,12 @@ td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums; 
 .dbx-database-toolbar .dbx-connection { white-space: nowrap; }
 .dbx-table-sidebar-heading { min-height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 8px 12px 0; color: #303946; font-size: 12px; }
 .dbx-table-sidebar-heading span { min-width: 22px; padding: 2px 6px; border-radius: 4px; background: #eceff3; color: var(--muted); text-align: center; font-size: 10px; }
+.dbx-tables-toggle { width: 30px; height: 30px; margin-left: auto; display: grid; place-items: center; border: 1px solid transparent; border-radius: 5px; background: transparent; color: #606b7a; cursor: pointer; }
+.dbx-tables-toggle:hover { border-color: var(--border); background: white; color: #2f3946; }
+.dbx-table-sidebar.collapsed .dbx-table-sidebar-heading { justify-content: center; padding: 8px 5px 0; }
+.dbx-table-sidebar.collapsed .dbx-tables-toggle { margin-left: 0; }
 .dbx-workspace--focused .dbx-database-body { grid-template-columns: 236px minmax(0,1fr); }
+.dbx-workspace--focused .dbx-database-body.tables-collapsed { grid-template-columns: 42px minmax(0,1fr); }
 .dbx-workspace--focused .dbx-table-search { margin-top: 7px; }
 .dbx-detail-heading { min-height: 64px; padding: 9px 18px; }
 .dbx-detail-controls { align-self: stretch; display: flex; align-items: center; gap: 18px; }
@@ -438,15 +443,26 @@ td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums; 
 .dbx-data-toolbar button.secondary { border-color: var(--border); background: white; color: #4a5565; }
 .dbx-data-toolbar > span { margin-left: auto; color: var(--muted); font-size: 11px; white-space: nowrap; }
 .dbx-data-toolbar .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.dbx-selection-toolbar { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--border); background: #fafbfc; }
+.dbx-selection-toolbar strong { font-size: 12px; color: #343e4c; }
+.dbx-selection-toolbar button { min-height: 32px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #c74642; border-radius: 6px; padding: 0 11px; background: #d9534f; color: white; font: inherit; font-size: 11px; font-weight: 700; }
+.dbx-selection-toolbar button:disabled { opacity: .55; }
+.dbx-action-error { padding: 8px 12px; border-bottom: 1px solid #efc8c5; background: #fff2f1; color: #963d39; font-size: 11px; }
 .dbx-data-grid { flex: 1; min-height: 0; overflow: auto; }
 .dbx-data-grid table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: 11px; }
 .dbx-data-grid th { position: sticky; top: 0; z-index: 1; min-width: 150px; border-right: 1px solid #e3e6eb; border-bottom: 1px solid #dfe3e8; background: #f3f5f7; text-align: left; }
 .dbx-data-grid th button { width: 100%; min-height: 34px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 0; padding: 6px 10px; background: transparent; color: #465163; font: inherit; font-weight: 700; text-align: left; }
 .dbx-data-grid th button:hover { background: #e9ecf1; }
+.dbx-data-grid th.dbx-select-cell, .dbx-data-grid td.dbx-select-cell { position: sticky; left: 0; z-index: 2; width: 42px; min-width: 42px; max-width: 42px; padding: 0; background: #f3f5f7; text-align: center; }
+.dbx-data-grid td.dbx-select-cell { z-index: 1; background: white; }
+.dbx-data-grid .dbx-select-cell input { width: 15px; height: 15px; margin: 0; accent-color: #635bff; cursor: pointer; }
+.dbx-data-grid .dbx-select-cell input:disabled { cursor: not-allowed; opacity: .35; }
 .dbx-data-grid td { max-width: 360px; height: 34px; padding: 7px 10px; border-right: 1px solid #edf0f2; border-bottom: 1px solid #edf0f2; overflow: hidden; color: #273243; text-overflow: ellipsis; white-space: nowrap; }
 .dbx-data-grid td.null { color: #a1a8b2; font-style: italic; }
 .dbx-data-grid td.empty { height: 110px; color: var(--muted); text-align: center; }
 .dbx-data-grid tbody tr:hover td { background: #fafaff; }
+.dbx-data-grid tbody tr.selected td { background: #f0efff; }
+.dbx-data-grid tbody tr.selected td.dbx-select-cell { background: #e6e4ff; }
 .dbx-pagination { min-height: 44px; display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 6px 12px; border-top: 1px solid var(--border); background: #fafbfc; }
 .dbx-pagination button { min-height: 30px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border); border-radius: 6px; padding: 0 9px; background: white; color: #404b5a; font: inherit; font-size: 11px; font-weight: 650; }
 .dbx-pagination button:disabled { opacity: .45; cursor: not-allowed; }
