@@ -4,7 +4,7 @@ Sistema interno de gestão da Prodexy Labs: financeiro por projeto, custos compa
 
 ## Explorador de bancos
 
-A rota administrativa `/infraestrutura/bancos` consulta estrutura, migrations, consumo aproximado e linhas paginadas dos databases explicitamente integrados, começando pelo PH Outlet. O acesso é server-side, somente leitura, com role própria e colunas autorizadas por projeto. A API exige administrador ativo e não oferece SQL livre ou escrita. Veja o [ExecPlan](docs/prodexy/plans/2026-10-25-explorador-bancos.md) e o [procedimento operacional](docs/DATABASE_EXPLORER_OPERATIONS.md).
+A rota administrativa `/infraestrutura/bancos` consulta estrutura, migrations, consumo aproximado e linhas paginadas dos databases explicitamente integrados. PH Outlet e Oficina Mais estão cadastrados; dados em grade continuam condicionados à allowlist de colunas de cada projeto. O acesso é server-side, somente leitura, e a API exige administrador ativo. SQL livre permanece separado em `/infraestrutura/sql`. Veja o [ExecPlan](docs/prodexy/plans/2026-10-25-explorador-bancos.md) e o [procedimento operacional](docs/DATABASE_EXPLORER_OPERATIONS.md).
 
 ## Stack
 
@@ -28,11 +28,14 @@ SUPABASE_URL=https://SEU-PROJETO.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=COLE_A_SERVICE_ROLE_KEY_AQUI
 NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=COLE_A_PUBLISHABLE_KEY_AQUI
-NEXT_PUBLIC_AUTH_ENABLED=false
+APP_BASIC_USER=COLE_O_USUARIO_DA_PROTECAO_AQUI
+APP_BASIC_PASSWORD=COLE_A_SENHA_DA_PROTECAO_AQUI
 NEXT_PUBLIC_APP_NAME=Prodexy Labs
+NEXT_PUBLIC_AUTH_ENABLED=true
+PRODEXY_SISTEMA_SQL_EXECUTOR_DB_PASSWORD=COLE_A_SENHA_DA_ROLE_SQL_EXECUTOR_AQUI
 ```
 
-> `SUPABASE_SERVICE_ROLE_KEY` é usada exclusivamente no servidor Next.js. Não crie uma variável `NEXT_PUBLIC_` para ela e não envie essa chave ao browser.
+> `SUPABASE_SERVICE_ROLE_KEY` e `PRODEXY_SISTEMA_SQL_EXECUTOR_DB_PASSWORD` são usadas exclusivamente no servidor Next.js. Não crie variáveis `NEXT_PUBLIC_` para elas e não envie seus valores ao browser.
 
 ## 2. Criar o banco no Supabase
 

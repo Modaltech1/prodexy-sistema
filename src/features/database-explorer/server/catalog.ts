@@ -22,6 +22,13 @@ const integrations: Record<string, ServerIntegration> = {
     user: "prodexy_sistema_sql_executor",
     passwordReference: "PRODEXY_SISTEMA_SQL_EXECUTOR_DB_PASSWORD",
   },
+  "oficina-mais": {
+    projectId: "oficina-mais",
+    host: "db02.prodexylabs.com",
+    database: "prodexy_oficina_mais",
+    user: "prodexy_sistema_sql_executor",
+    passwordReference: "PRODEXY_SISTEMA_SQL_EXECUTOR_DB_PASSWORD",
+  },
 };
 
 const poolStore = globalThis as typeof globalThis & { prodexyDatabaseExplorerPools?: Map<string, Pool> };

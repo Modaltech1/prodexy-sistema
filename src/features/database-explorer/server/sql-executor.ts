@@ -17,6 +17,11 @@ const integrations: Record<string, SqlIntegration> = {
     host: "db01.prodexylabs.com",
     database: "prodexy_ph_outlet",
   },
+  "oficina-mais": {
+    projectId: "oficina-mais",
+    host: "db02.prodexylabs.com",
+    database: "prodexy_oficina_mais",
+  },
 };
 
 const passwordReference = "PRODEXY_SISTEMA_SQL_EXECUTOR_DB_PASSWORD";

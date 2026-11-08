@@ -7,12 +7,16 @@ import { getTableDataPolicy } from "../src/features/database-explorer/data-polic
 import { requiresSqlConfirmation } from "../src/features/database-explorer/sql-editor.ts";
 import { buildDeleteRowsQuery } from "../src/features/database-explorer/row-actions.ts";
 
-test("registra PH sem fingir que o banco já está conectado", () => {
+test("registra os databases AWS sem fingir que já estão conectados", () => {
   const { projects } = getRegisteredDatabaseProjects();
-  assert.deepEqual(projects.map((project) => project.id), ["ph-outlet"]);
+  assert.deepEqual(projects.map((project) => project.id), ["ph-outlet", "oficina-mais"]);
   assert.equal(projects[0].databaseName, "prodexy_ph_outlet");
-  assert.equal(projects[0].connectionState, "pending");
-  assert.equal(projects[0].tableCount, null);
+  assert.equal(projects[1].databaseName, "prodexy_oficina_mais");
+  assert.equal(projects[1].nodeName, "prodexy-prod-db-node-02");
+  for (const project of projects) {
+    assert.equal(project.connectionState, "pending");
+    assert.equal(project.tableCount, null);
+  }
 });
 
 test("não compartilha objetos mutáveis do inventário entre requisições", () => {
@@ -28,6 +32,7 @@ test("lookup explícito não conecta projeto desconhecido e devolve cópia", () 
   assert.ok(first);
   first.projectName = "alterado";
   assert.equal(getRegisteredDatabaseProject("ph-outlet")?.projectName, "PH Outlet");
+  assert.equal(getRegisteredDatabaseProject("oficina-mais")?.projectName, "Oficina Mais");
 });
 
 test("inventário público não contém campos de credencial", () => {

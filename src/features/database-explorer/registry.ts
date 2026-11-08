@@ -12,6 +12,15 @@ const registeredProjects: readonly DatabaseProject[] = [
     connectionState: "pending",
     tableCount: null,
   },
+  {
+    id: "oficina-mais",
+    projectName: "Oficina Mais",
+    databaseName: "prodexy_oficina_mais",
+    provider: "PostgreSQL AWS",
+    nodeName: "prodexy-prod-db-node-02",
+    connectionState: "pending",
+    tableCount: null,
+  },
 ];
 
 export function getRegisteredDatabaseProjects(): DatabaseInventoryResponse {

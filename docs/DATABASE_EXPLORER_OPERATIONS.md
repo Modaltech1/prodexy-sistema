@@ -2,7 +2,7 @@
 
 ## Estado
 
-O PH está integrado ao Prodexy Sistema. O Explorador e o SQL Editor usam a mesma role administrativa compartilhada, `prodexy_sistema_sql_executor`, por pools server-side separados.
+PH Outlet e Oficina Mais estão cadastrados no Prodexy Sistema. O Explorador e o SQL Editor usam a mesma role administrativa compartilhada, `prodexy_sistema_sql_executor`, por pools server-side separados. O PH possui allowlist de dados; o Oficina expõe inicialmente somente catálogo/estrutura e SQL administrativo, até uma política de colunas ser autorizada.
 
 ## Credencial
 
@@ -17,7 +17,7 @@ O PH está integrado ao Prodexy Sistema. O Explorador e o SQL Editor usam a mesm
 - `/infraestrutura/bancos`: catálogo e dados; a conexão força `default_transaction_read_only=on`.
 - `/infraestrutura/sql`: SQL administrativo informado pelo responsável.
 - Migrations dos databases cadastrados são aplicadas manualmente pelo responsável em `/infraestrutura/sql`; o projeto fornece o arquivo SQL e o pós-check.
-- A role runtime `prodexy_ph_outlet_app` continua exclusiva da aplicação PH.
+- As roles runtime `prodexy_ph_outlet_app` e `prodexy_oficina_mais_app` continuam exclusivas de suas aplicações.
 - A role antiga `prodexy_sistema_ph_observer` foi substituída e deve permanecer ausente após a remoção operacional autorizada.
 
 ## Onboarding de outro database
