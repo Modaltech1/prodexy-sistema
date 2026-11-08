@@ -4,7 +4,7 @@ import { getRegisteredDatabaseProject, getRegisteredDatabaseProjects } from "../
 import { assembleCatalog, catalogQueries } from "../src/features/database-explorer/catalog.ts";
 import { buildDataQuery } from "../src/features/database-explorer/data-query.ts";
 import { getTableDataPolicy } from "../src/features/database-explorer/data-policy.ts";
-import { requiresSqlConfirmation } from "../src/features/database-explorer/sql-editor.ts";
+import { getPrimarySqlResult, serializeSqlResultAsCsv, serializeSqlResultAsJson, serializeSqlResultAsMarkdown } from "../src/features/database-explorer/sql-editor.ts";
 import { buildDeleteRowsQuery } from "../src/features/database-explorer/row-actions.ts";
 
 test("registra os databases AWS sem fingir que já estão conectados", () => {
@@ -142,10 +142,24 @@ test("consultas do catálogo são fixas e não incluem dados de negócio", () =>
   }
 });
 
-test("SQL Editor confirma comandos de alteração e executa leitura diretamente", () => {
-  assert.equal(requiresSqlConfirmation("SELECT * FROM public.lojas"), false);
-  assert.equal(requiresSqlConfirmation("SHOW statement_timeout"), false);
-  assert.equal(requiresSqlConfirmation("EXPLAIN SELECT 1"), false);
-  assert.equal(requiresSqlConfirmation("ALTER TABLE public.lojas ADD COLUMN teste text"), true);
-  assert.equal(requiresSqlConfirmation("BEGIN; UPDATE public.lojas SET ativa = true; COMMIT;"), true);
+test("SQL Editor exibe o último resultado tabular sem abas por comando", () => {
+  const command = { command: "CREATE", rowCount: null, columns: [], rows: [] };
+  const rows = { command: "SELECT", rowCount: 1, columns: ["id", "dados"], rows: [{ id: 1, dados: { ativo: true } }] };
+  assert.equal(getPrimarySqlResult([command, rows, { ...command, command: "COMMIT" }]), rows);
+  assert.equal(getPrimarySqlResult([command])?.command, "CREATE");
+});
+
+test("SQL Editor exporta o resultado em JSON, CSV e Markdown", () => {
+  const result = {
+    command: "SELECT",
+    rowCount: 2,
+    columns: ["nome", "observacao"],
+    rows: [
+      { nome: "Oficina, Mais", observacao: "linha 1\nlinha 2" },
+      { nome: "PH Outlet", observacao: null },
+    ],
+  };
+  assert.equal(serializeSqlResultAsJson(result), JSON.stringify(result.rows, null, 2));
+  assert.equal(serializeSqlResultAsCsv(result), 'nome,observacao\n"Oficina, Mais","linha 1\nlinha 2"\nPH Outlet,');
+  assert.equal(serializeSqlResultAsMarkdown(result), "| nome | observacao |\n| --- | --- |\n| Oficina, Mais | linha 1<br>linha 2 |\n| PH Outlet |  |");
 });

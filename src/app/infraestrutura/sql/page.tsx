@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Clock3, Database, FilePlus2, Play, SquareTerminal } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Braces, ChevronDown, Clipboard, Clock3, Database, Download, FilePlus2, Play, SquareTerminal, Table2 } from "lucide-react";
 import { apiFetch } from "@/lib/client-api";
-import type { DatabaseInventoryResponse, SqlExecutionResponse, SqlResultSet } from "@/features/database-explorer/contracts";
-import { requiresSqlConfirmation } from "@/features/database-explorer/sql-editor";
+import type { DatabaseInventoryResponse, SqlExecutionResponse } from "@/features/database-explorer/contracts";
+import { getPrimarySqlResult, serializeSqlResultAsCsv, serializeSqlResultAsJson, serializeSqlResultAsMarkdown } from "@/features/database-explorer/sql-editor";
 
 type QueryHistoryItem = {
   id: string;
@@ -22,20 +22,17 @@ function formatCell(value: unknown) {
   return String(value);
 }
 
-function resultLabel(result: SqlResultSet, index: number) {
-  const affected = result.rowCount === null ? "" : ` · ${result.rowCount} ${result.rowCount === 1 ? "linha" : "linhas"}`;
-  return `${index + 1}. ${result.command || "Resultado"}${affected}`;
-}
-
 export default function SqlEditorPage() {
   const [inventory, setInventory] = useState<DatabaseInventoryResponse | null>(null);
   const [selectedId, setSelectedId] = useState("ph-outlet");
   const [sql, setSql] = useState(initialSql);
   const [result, setResult] = useState<SqlExecutionResponse | null>(null);
-  const [selectedResult, setSelectedResult] = useState(0);
+  const [resultView, setResultView] = useState<"table" | "json">("table");
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
   const [history, setHistory] = useState<QueryHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const exportMenuRef = useRef<HTMLDetailsElement>(null);
 
   useEffect(() => {
     apiFetch<DatabaseInventoryResponse>("/api/infraestrutura/bancos")
@@ -51,7 +48,8 @@ export default function SqlEditorPage() {
 
   const projects = inventory?.projects ?? [];
   const selected = projects.find((project) => project.id === selectedId) ?? projects[0];
-  const activeResult = result?.results[selectedResult] ?? null;
+  const activeResult = result ? getPrimarySqlResult(result.results) : null;
+  const hasTabularResult = Boolean(activeResult?.columns.length);
   const canRun = Boolean(sql.trim() && selected && !loading);
 
   function saveHistory(item: QueryHistoryItem) {
@@ -64,11 +62,11 @@ export default function SqlEditorPage() {
 
   async function runSql() {
     if (!canRun || !selected) return;
-    if (requiresSqlConfirmation(sql) && !window.confirm(`Executar este SQL em ${selected.databaseName}?`)) return;
     setLoading(true);
     setError(null);
     setResult(null);
-    setSelectedResult(0);
+    setResultView("table");
+    setExportMessage(null);
     const executedAt = new Date().toISOString();
     try {
       const response = await apiFetch<SqlExecutionResponse>(`/api/infraestrutura/sql/${encodeURIComponent(selected.id)}`, {
@@ -89,7 +87,32 @@ export default function SqlEditorPage() {
     setSql("");
     setResult(null);
     setError(null);
-    setSelectedResult(0);
+    setResultView("table");
+    setExportMessage(null);
+  }
+
+  async function copyResult(content: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(content);
+      setExportMessage(`${label} copiado.`);
+    } catch {
+      setExportMessage("Não foi possível copiar.");
+    } finally {
+      if (exportMenuRef.current) exportMenuRef.current.open = false;
+    }
+  }
+
+  function downloadCsv() {
+    if (!activeResult || !selected) return;
+    const blob = new Blob([serializeSqlResultAsCsv(activeResult)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${selected.databaseName}-${new Date().toISOString().replace(/[:.]/g, "-")}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    exportMenuRef.current?.removeAttribute("open");
+    setExportMessage("CSV baixado.");
   }
 
   return <section className="sql-workspace" aria-label="SQL Editor">
@@ -97,7 +120,7 @@ export default function SqlEditorPage() {
       <button type="button" className="sql-new-query" onClick={newQuery}><FilePlus2 size={15}/>Nova consulta</button>
       <div className="sql-history-heading"><Clock3 size={14}/><span>Histórico desta sessão</span></div>
       <div className="sql-history-list">
-        {history.map((item) => <button type="button" key={item.id} onClick={() => { setSql(item.sql); setError(null); setResult(null); }}><span className={item.ok ? "ok" : "error"}/><div><strong>{item.sql.split(/\r?\n/, 1)[0].slice(0, 44) || "Consulta SQL"}</strong><small>{item.databaseName} · {new Date(item.executedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</small></div></button>)}
+        {history.map((item) => <button type="button" key={item.id} onClick={() => { setSql(item.sql); setError(null); setResult(null); setResultView("table"); setExportMessage(null); }}><span className={item.ok ? "ok" : "error"}/><div><strong>{item.sql.split(/\r?\n/, 1)[0].slice(0, 44) || "Consulta SQL"}</strong><small>{item.databaseName} · {new Date(item.executedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</small></div></button>)}
         {!history.length ? <p>As consultas executadas nesta aba aparecerão aqui.</p> : null}
       </div>
     </aside>
@@ -120,13 +143,25 @@ export default function SqlEditorPage() {
       </div>
       <section className="sql-results" aria-label="Resultados SQL">
         <div className="sql-results-tabs">
-          <strong>Resultados</strong>
-          {result ? <span>{result.durationMs} ms · {result.databaseName}</span> : null}
+          <div className="sql-results-heading"><strong>Resultados</strong>{result ? <span>{activeResult?.rows.length ?? 0} {(activeResult?.rows.length ?? 0) === 1 ? "linha" : "linhas"} · {result.durationMs} ms</span> : null}</div>
+          {hasTabularResult && activeResult ? <div className="sql-results-actions">
+            <div className="sql-result-view" role="tablist" aria-label="Formato do resultado">
+              <button type="button" role="tab" aria-selected={resultView === "table"} className={resultView === "table" ? "active" : ""} onClick={() => setResultView("table")}><Table2 size={13}/>Tabela</button>
+              <button type="button" role="tab" aria-selected={resultView === "json"} className={resultView === "json" ? "active" : ""} onClick={() => setResultView("json")}><Braces size={13}/>JSON</button>
+            </div>
+            <details className="sql-export-menu" ref={exportMenuRef}>
+              <summary>Exportar<ChevronDown size={13}/></summary>
+              <div>
+                <button type="button" onClick={() => void copyResult(serializeSqlResultAsMarkdown(activeResult), "Markdown")}><Clipboard size={13}/>Copiar como Markdown</button>
+                <button type="button" onClick={() => void copyResult(serializeSqlResultAsJson(activeResult), "JSON")}><Clipboard size={13}/>Copiar como JSON</button>
+                <button type="button" onClick={() => void copyResult(serializeSqlResultAsCsv(activeResult), "CSV")}><Clipboard size={13}/>Copiar como CSV</button>
+                <button type="button" onClick={downloadCsv}><Download size={13}/>Baixar CSV</button>
+              </div>
+            </details>
+          </div> : null}
         </div>
-        {error ? <div className="sql-result-message error"><strong>Erro</strong><pre>{error}</pre></div> : result ? <>
-          {result.results.length > 1 ? <div className="sql-result-set-tabs">{result.results.map((item, index) => <button type="button" className={selectedResult === index ? "active" : ""} key={`${item.command}-${index}`} onClick={() => setSelectedResult(index)}>{resultLabel(item, index)}</button>)}</div> : null}
-          {activeResult?.columns.length ? <div className="sql-result-grid"><table><thead><tr>{activeResult.columns.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{activeResult.rows.map((row, rowIndex) => <tr key={rowIndex}>{activeResult.columns.map((column) => { const value = formatCell(row[column]); return <td key={column} className={value === "NULL" ? "null" : ""} title={value}>{value}</td>; })}</tr>)}</tbody></table></div> : <div className="sql-result-message success"><strong>{activeResult?.command || "SQL executado"}</strong><span>{activeResult?.rowCount === null ? "Comando concluído." : `${activeResult?.rowCount ?? 0} linha(s) afetada(s).`}</span></div>}
-        </> : <div className="sql-result-empty"><SquareTerminal size={24}/><span>Execute uma consulta para visualizar o resultado.</span></div>}
+        {exportMessage ? <div className="sql-export-feedback" role="status">{exportMessage}</div> : null}
+        {error ? <div className="sql-result-message error"><strong>Erro ao executar SQL</strong><pre>{error}</pre></div> : result ? hasTabularResult && activeResult ? resultView === "table" ? <div className="sql-result-grid"><table><thead><tr>{activeResult.columns.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{activeResult.rows.map((row, rowIndex) => <tr key={rowIndex}>{activeResult.columns.map((column) => { const value = formatCell(row[column]); return <td key={column} className={value === "NULL" ? "null" : ""} title={value}>{value}</td>; })}</tr>)}</tbody></table></div> : <pre className="sql-result-json">{serializeSqlResultAsJson(activeResult)}</pre> : <div className="sql-result-message success"><strong>Sucesso</strong><span>{activeResult?.rowCount && activeResult.rowCount > 0 ? `${activeResult.rowCount} linha(s) afetada(s).` : "Nenhuma linha retornada."}</span></div> : <div className="sql-result-empty"><SquareTerminal size={24}/><span>Execute uma consulta para visualizar o resultado.</span></div>}
       </section>
     </div>
   </section>;
