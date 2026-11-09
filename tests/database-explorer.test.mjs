@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { getRegisteredDatabaseProject, getRegisteredDatabaseProjects } from "../src/features/database-explorer/registry.ts";
 import { assembleCatalog, catalogQueries } from "../src/features/database-explorer/catalog.ts";
@@ -142,6 +143,12 @@ test("consultas do catálogo são fixas e não incluem dados de negócio", () =>
   }
 });
 
+test("catálogo aceita os dois nomes históricos da data de migration", () => {
+  assert.match(catalogQueries.migrations, /to_jsonb\(migration\) ->> 'aplicada_em'/);
+  assert.match(catalogQueries.migrations, /to_jsonb\(migration\) ->> 'aplicado_em'/);
+  assert.doesNotMatch(catalogQueries.migrations, /ORDER BY aplicada_em/);
+});
+
 test("SQL Editor exibe o último resultado tabular sem abas por comando", () => {
   const command = { command: "CREATE", rowCount: null, columns: [], rows: [] };
   const rows = { command: "SELECT", rowCount: 1, columns: ["id", "dados"], rows: [{ id: 1, dados: { ativo: true } }] };
@@ -162,4 +169,15 @@ test("SQL Editor exporta o resultado em JSON, CSV e Markdown", () => {
   assert.equal(serializeSqlResultAsJson(result), JSON.stringify(result.rows, null, 2));
   assert.equal(serializeSqlResultAsCsv(result), 'nome,observacao\n"Oficina, Mais","linha 1\nlinha 2"\nPH Outlet,');
   assert.equal(serializeSqlResultAsMarkdown(result), "| nome | observacao |\n| --- | --- |\n| Oficina, Mais | linha 1<br>linha 2 |\n| PH Outlet |  |");
+});
+
+test("SQL Editor exige seleção explícita e confere o database retornado pelo servidor", () => {
+  const page = readFileSync(new URL("../src/app/infraestrutura/sql/page.tsx", import.meta.url), "utf8");
+  const executor = readFileSync(new URL("../src/features/database-explorer/server/sql-executor.ts", import.meta.url), "utf8");
+  assert.match(page, /useState\(""\)/);
+  assert.match(page, /Selecione o cliente e o database/);
+  assert.match(page, /response\.databaseName !== selected\.databaseName/);
+  assert.doesNotMatch(page, /\?\? projects\[0\]/);
+  assert.match(executor, /SELECT current_database\(\) AS database_name/);
+  assert.match(executor, /databaseName !== integration\.database/);
 });

@@ -75,14 +75,22 @@ export async function executeSql(projectId: string, sql: string): Promise<SqlExe
   const integration = integrations[projectId];
   if (!integration) return null;
   const startedAt = performance.now();
-  const result = await getPool(integration).query(sql);
-  const resultSets = (Array.isArray(result) ? result : [result]).map(normalizeResult);
-  return {
-    projectId,
-    databaseName: integration.database,
-    durationMs: Math.round(performance.now() - startedAt),
-    results: resultSets,
-  };
+  const client = await getPool(integration).connect();
+  try {
+    const identity = await client.query<{ database_name: string }>("SELECT current_database() AS database_name");
+    const databaseName = identity.rows[0]?.database_name;
+    if (databaseName !== integration.database) throw new Error("DATABASE_TARGET_MISMATCH");
+    const result = await client.query(sql);
+    const resultSets = (Array.isArray(result) ? result : [result]).map(normalizeResult);
+    return {
+      projectId,
+      databaseName,
+      durationMs: Math.round(performance.now() - startedAt),
+      results: resultSets,
+    };
+  } finally {
+    client.release();
+  }
 }
 
 export async function deleteDatabaseRows(projectId: string, schema: string, table: string, rows: readonly RowIdentity[]) {

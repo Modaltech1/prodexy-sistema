@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Braces, ChevronDown, Clipboard, Clock3, Database, Download, FilePlus2, Play, SquareTerminal, Table2 } from "lucide-react";
+import { Braces, ChevronDown, Clipboard, Clock3, Database, Download, FilePlus2, Play, ShieldCheck, SquareTerminal, Table2 } from "lucide-react";
 import { apiFetch } from "@/lib/client-api";
 import type { DatabaseInventoryResponse, SqlExecutionResponse } from "@/features/database-explorer/contracts";
 import { getPrimarySqlResult, serializeSqlResultAsCsv, serializeSqlResultAsJson, serializeSqlResultAsMarkdown } from "@/features/database-explorer/sql-editor";
@@ -9,6 +9,7 @@ import { getPrimarySqlResult, serializeSqlResultAsCsv, serializeSqlResultAsJson,
 type QueryHistoryItem = {
   id: string;
   sql: string;
+  projectId?: string;
   databaseName: string;
   executedAt: string;
   ok: boolean;
@@ -24,7 +25,7 @@ function formatCell(value: unknown) {
 
 export default function SqlEditorPage() {
   const [inventory, setInventory] = useState<DatabaseInventoryResponse | null>(null);
-  const [selectedId, setSelectedId] = useState("ph-outlet");
+  const [selectedId, setSelectedId] = useState("");
   const [sql, setSql] = useState(initialSql);
   const [result, setResult] = useState<SqlExecutionResponse | null>(null);
   const [resultView, setResultView] = useState<"table" | "json">("table");
@@ -47,7 +48,7 @@ export default function SqlEditorPage() {
   }, []);
 
   const projects = inventory?.projects ?? [];
-  const selected = projects.find((project) => project.id === selectedId) ?? projects[0];
+  const selected = projects.find((project) => project.id === selectedId) ?? null;
   const activeResult = result ? getPrimarySqlResult(result.results) : null;
   const hasTabularResult = Boolean(activeResult?.columns.length);
   const canRun = Boolean(sql.trim() && selected && !loading);
@@ -73,11 +74,14 @@ export default function SqlEditorPage() {
         method: "POST",
         body: JSON.stringify({ sql }),
       });
+      if (response.databaseName !== selected.databaseName) {
+        throw new Error("O database confirmado pelo servidor diverge do destino selecionado. Execução interrompida.");
+      }
       setResult(response);
-      saveHistory({ id: crypto.randomUUID(), sql, databaseName: selected.databaseName, executedAt, ok: true });
+      saveHistory({ id: crypto.randomUUID(), sql, projectId: selected.id, databaseName: selected.databaseName, executedAt, ok: true });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Falha ao executar SQL.");
-      saveHistory({ id: crypto.randomUUID(), sql, databaseName: selected.databaseName, executedAt, ok: false });
+      saveHistory({ id: crypto.randomUUID(), sql, projectId: selected.id, databaseName: selected.databaseName, executedAt, ok: false });
     } finally {
       setLoading(false);
     }
@@ -85,6 +89,14 @@ export default function SqlEditorPage() {
 
   function newQuery() {
     setSql("");
+    setResult(null);
+    setError(null);
+    setResultView("table");
+    setExportMessage(null);
+  }
+
+  function selectProject(projectId: string) {
+    setSelectedId(projectId);
     setResult(null);
     setError(null);
     setResultView("table");
@@ -120,14 +132,14 @@ export default function SqlEditorPage() {
       <button type="button" className="sql-new-query" onClick={newQuery}><FilePlus2 size={15}/>Nova consulta</button>
       <div className="sql-history-heading"><Clock3 size={14}/><span>Histórico desta sessão</span></div>
       <div className="sql-history-list">
-        {history.map((item) => <button type="button" key={item.id} onClick={() => { setSql(item.sql); setError(null); setResult(null); setResultView("table"); setExportMessage(null); }}><span className={item.ok ? "ok" : "error"}/><div><strong>{item.sql.split(/\r?\n/, 1)[0].slice(0, 44) || "Consulta SQL"}</strong><small>{item.databaseName} · {new Date(item.executedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</small></div></button>)}
+        {history.map((item) => <button type="button" key={item.id} onClick={() => { const historyProject = projects.find((project) => project.id === item.projectId || project.databaseName === item.databaseName); setSql(item.sql); selectProject(historyProject?.id ?? ""); }}><span className={item.ok ? "ok" : "error"}/><div><strong>{item.sql.split(/\r?\n/, 1)[0].slice(0, 44) || "Consulta SQL"}</strong><small>{item.databaseName} · {new Date(item.executedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</small></div></button>)}
         {!history.length ? <p>As consultas executadas nesta aba aparecerão aqui.</p> : null}
       </div>
     </aside>
     <div className="sql-main">
       <header className="sql-toolbar">
-        <label><Database size={15}/><span className="sr-only">Database</span><select value={selected?.id ?? selectedId} onChange={(event) => setSelectedId(event.target.value)}>{projects.map((project) => <option key={project.id} value={project.id}>{project.projectName} — {project.databaseName}</option>)}</select></label>
-        <span className="sql-connection-label">{selected?.nodeName ?? "Carregando databases…"}</span>
+        <label><Database size={15}/><span className="sr-only">Cliente e database</span><select value={selectedId} onChange={(event) => selectProject(event.target.value)}><option value="" disabled>Selecione o cliente e o database</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.projectName} — {project.databaseName}</option>)}</select></label>
+        <span className={`sql-connection-label ${selected ? "confirmed" : ""}`}>{selected ? <><ShieldCheck size={13}/><span>{selected.nodeName}</span><small>Destino confirmado</small></> : "Nenhum destino selecionado"}</span>
         <button type="button" className="sql-run" disabled={!canRun} onClick={runSql}><Play size={14} fill="currentColor"/>{loading ? "Executando…" : "Executar"}<kbd>Ctrl ↵</kbd></button>
       </header>
       <div className="sql-editor-pane">

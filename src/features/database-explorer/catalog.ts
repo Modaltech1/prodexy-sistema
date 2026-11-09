@@ -48,9 +48,13 @@ export const catalogQueries = {
     WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p', 'v', 'm')
     ORDER BY n.nspname, c.relname, con.conname`,
   migrations: `
-    SELECT versao AS version, aplicada_em AS applied_at
-    FROM public.migracoes_schema
-    ORDER BY aplicada_em DESC, versao DESC
+    SELECT migration.versao AS version,
+      COALESCE(
+        pg_catalog.to_jsonb(migration) ->> 'aplicada_em',
+        pg_catalog.to_jsonb(migration) ->> 'aplicado_em'
+      )::timestamptz AS applied_at
+    FROM public.migracoes_schema migration
+    ORDER BY applied_at DESC, migration.versao DESC
     LIMIT 50`,
 } as const;
 
