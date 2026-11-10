@@ -353,6 +353,68 @@ td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums; 
 .dbx-topbar-title { font-size: 13px; color: #303945; }
 .dbx-topbar-title span { color: #a6afbb; margin: 0 7px; }
 .content--database { max-width: none; padding: 14px 16px 16px; }
+
+.cognito-workspace { height: max(620px,calc(100dvh - 92px)); min-height: 620px; display: grid; grid-template-rows: auto minmax(0,1fr); overflow: hidden; border: 1px solid var(--border); border-radius: 7px; background: white; }
+.cognito-target-toolbar { min-height: 62px; padding: 10px 12px; border-bottom: 1px solid var(--border); background: #fbfcfd; display: flex; align-items: center; gap: 18px; }
+.cognito-target-toolbar .dbx-project-picker { width: min(520px,46vw); }
+.cognito-target-context { min-width: 0; display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 10px; }
+.cognito-target-context span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cognito-target-context i { width: 3px; height: 3px; flex: 0 0 3px; border-radius: 50%; background: #aab1ba; }
+.cognito-target-hint { color: var(--muted); font-size: 10px; }
+.cognito-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.cognito-empty { flex: 1; display: grid; place-content: center; justify-items: center; padding: 30px; text-align: center; }
+.cognito-empty > div { width: 50px; height: 50px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); color: var(--muted); }
+.cognito-empty h1 { margin: 14px 0 5px; font-size: 18px; }
+.cognito-empty p { margin: 0; color: var(--muted); font-size: 11px; }
+.cognito-empty > span { margin-top: 16px; max-width: 520px; padding: 9px 11px; border-radius: 7px; background: var(--negative-soft); color: var(--negative); font-size: 11px; line-height: 1.45; }
+.cognito-header { min-height: 78px; padding: 13px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.cognito-header > div:first-child { min-width: 0; display: grid; gap: 2px; }
+.cognito-header span, .cognito-header small { color: var(--muted); font-size: 10px; }
+.cognito-header h1 { margin: 0; font-size: 18px; overflow-wrap: anywhere; }
+.cognito-header-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 14px; }
+.cognito-count { flex: 0 0 auto; display: grid; justify-items: end; gap: 2px; }
+.cognito-count strong { font-size: 18px; font-variant-numeric: tabular-nums; }
+.cognito-toolbar { min-height: 58px; padding: 10px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 7px; }
+.cognito-toolbar label { height: 36px; min-width: 220px; max-width: 620px; flex: 1; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 7px; color: var(--muted); }
+.cognito-toolbar label:focus-within { border-color: #9d97ff; box-shadow: 0 0 0 3px var(--accent-soft); }
+.cognito-toolbar input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; }
+.cognito-toolbar button { height: 36px; border: 0; border-radius: 7px; padding: 0 13px; background: var(--accent); color: white; font-weight: 650; }
+.cognito-toolbar button.secondary { border: 1px solid var(--border); background: white; color: var(--muted); }
+.cognito-users { min-width: 0; min-height: 0; flex: 1; overflow: auto; }
+.cognito-users table { min-width: 850px; }
+.cognito-users td:first-child { min-width: 260px; }
+.cognito-users td strong, .cognito-users td small { display: block; }
+.cognito-users td small { margin-top: 3px; color: var(--muted); font-size: 9px; }
+.cognito-users td.empty { height: 180px; color: var(--muted); text-align: center; }
+.cognito-users td.empty svg { margin-right: 6px; vertical-align: middle; }
+.cognito-status { display: inline-flex; align-items: center; gap: 5px; min-height: 23px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 700; }
+.cognito-status.enabled { background: var(--positive-soft); color: var(--positive); }
+.cognito-status.disabled { background: var(--negative-soft); color: var(--negative); }
+.cognito-state { min-height: 180px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--muted); }
+.cognito-state.error { color: var(--negative); }
+.cognito-form-field { margin-top: 12px; }
+.cognito-form-note { margin: 10px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.cognito-password-option { margin-top: 14px; padding: 11px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); display: flex; align-items: flex-start; gap: 9px; cursor: pointer; }
+.cognito-password-option input { margin-top: 2px; }
+.cognito-password-option span { display: grid; gap: 3px; }
+.cognito-password-option small { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.cognito-confirmation { display: flex; align-items: flex-start; gap: 12px; }
+.cognito-confirmation > div { width: 40px; height: 40px; flex: 0 0 40px; display: grid; place-items: center; border-radius: 8px; background: var(--accent-soft); color: var(--accent); }
+.cognito-confirmation > div.danger { background: var(--negative-soft); color: var(--negative); }
+.cognito-confirmation > span { min-width: 0; display: grid; gap: 4px; }
+.cognito-confirmation strong { overflow-wrap: anywhere; }
+.cognito-confirmation p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+
+@media (max-width: 760px) {
+  .cognito-workspace { height: auto; min-height: 720px; grid-template-rows: auto minmax(500px,1fr); }
+  .cognito-target-toolbar { align-items: stretch; flex-direction: column; gap: 8px; }
+  .cognito-target-toolbar .dbx-project-picker { width: 100%; }
+  .cognito-target-context { flex-wrap: wrap; }
+  .cognito-toolbar { align-items: stretch; flex-wrap: wrap; }
+  .cognito-toolbar label { min-width: 100%; max-width: none; }
+  .cognito-header { align-items: flex-start; }
+  .cognito-header-actions { align-items: flex-end; flex-direction: column; }
+}
 .dbx-database-body { flex: 1; display: grid; grid-template-columns: 240px minmax(0,1fr); min-height: 0; overflow: hidden; }
 .dbx-table-sidebar { height: 100%; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border); background: #fafbfc; }
 .dbx-table-search { margin: 10px; height: 34px; display: flex; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 6px; background: white; padding: 0 9px; color: var(--muted); }

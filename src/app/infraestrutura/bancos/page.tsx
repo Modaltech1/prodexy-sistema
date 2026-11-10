@@ -122,7 +122,7 @@ export default function ProjectDatabasesPage() {
   const [tableSearch, setTableSearch] = useState("");
   const [selectedId, setSelectedId] = useState("ph-outlet");
   const [selectedTableName, setSelectedTableName] = useState<string | null>(null);
-  const [tab, setTab] = useState<ExplorerTab>("structure");
+  const [tab, setTab] = useState<ExplorerTab>("data");
   const [rowData, setRowData] = useState<DatabaseRows | null>(null);
   const [rowError, setRowError] = useState<string | null>(null);
   const [loadingRows, setLoadingRows] = useState(false);
@@ -162,6 +162,8 @@ export default function ProjectDatabasesPage() {
         const next = payload.data as DatabaseCatalog;
         setCatalog(next);
         setSelectedTableName(next.tables[0] ? `${next.tables[0].schema}.${next.tables[0].name}` : null);
+        setTab("data");
+        setLoadingRows(Boolean(next.tables[0]));
         setInventory((current) => current && ({ projects: current.projects.map((project) => project.id === selectedId ? { ...project, connectionState: "connected", tableCount: next.tables.length } : project) }));
       })
       .catch(() => { if (active) { setCatalogError("Não foi possível consultar o DB Node agora."); setInventory((current) => current && ({ projects: current.projects.map((project) => project.id === selectedId ? { ...project, connectionState: "unavailable" } : project) })); } })
@@ -198,7 +200,7 @@ export default function ProjectDatabasesPage() {
     setSelectedTableName(null);
     setLoadingCatalog(true);
     setSelectedId(projectId);
-    setTab("structure");
+    setTab("data");
     setTableSearch("");
     resetDataView();
   }
@@ -283,7 +285,7 @@ export default function ProjectDatabasesPage() {
               </div>
               {!tableSidebarCollapsed ? <>
                 <label className="dbx-table-search"><Search size={15}/><span className="sr-only">Buscar tabela</span><input value={tableSearch} onChange={(event) => setTableSearch(event.target.value)} placeholder="Buscar tabela"/></label>
-                <div className="dbx-table-list">{visibleTables.map((table) => <button key={`${table.schema}.${table.name}`} type="button" className={`dbx-table-item ${selectedTableName === `${table.schema}.${table.name}` ? "active" : ""}`} onClick={() => { setSelectedTableName(`${table.schema}.${table.name}`); setTab("structure"); resetDataView(); }}><Table2 size={15}/><span>{table.name}</span><small>{table.columns.length}</small></button>)}{visibleTables.length === 0 ? <p>Nenhuma tabela encontrada.</p> : null}</div>
+                <div className="dbx-table-list">{visibleTables.map((table) => <button key={`${table.schema}.${table.name}`} type="button" className={`dbx-table-item ${selectedTableName === `${table.schema}.${table.name}` ? "active" : ""}`} onClick={() => { setSelectedTableName(`${table.schema}.${table.name}`); setTab("data"); resetDataView(); setLoadingRows(true); }}><Table2 size={15}/><span>{table.name}</span><small>{table.columns.length}</small></button>)}{visibleTables.length === 0 ? <p>Nenhuma tabela encontrada.</p> : null}</div>
                 <details className="dbx-migrations"><summary>Migrations <span>{activeCatalog.migrations.length}</span></summary><div className="dbx-migration-list">{activeCatalog.migrations.length ? activeCatalog.migrations.map((migration) => <div key={migration.version}><span>{migration.version}</span><small>{new Date(migration.appliedAt).toLocaleDateString("pt-BR")}</small></div>) : <p>Nenhuma registrada.</p>}</div></details>
               </> : null}
             </aside>

@@ -33,9 +33,12 @@ APP_BASIC_PASSWORD=COLE_A_SENHA_DA_PROTECAO_AQUI
 NEXT_PUBLIC_APP_NAME=Prodexy Labs
 NEXT_PUBLIC_AUTH_ENABLED=true
 PRODEXY_SISTEMA_SQL_EXECUTOR_DB_PASSWORD=COLE_A_SENHA_DA_ROLE_SQL_EXECUTOR_AQUI
+PRODEXY_SISTEMA_COGNITO_REGION=us-east-1
+PRODEXY_SISTEMA_COGNITO_AWS_ACCESS_KEY_ID=CONFIGURAR_SOMENTE_APOS_AUTORIZACAO
+PRODEXY_SISTEMA_COGNITO_AWS_SECRET_ACCESS_KEY=CONFIGURAR_SOMENTE_APOS_AUTORIZACAO
 ```
 
-> `SUPABASE_SERVICE_ROLE_KEY` e `PRODEXY_SISTEMA_SQL_EXECUTOR_DB_PASSWORD` são usadas exclusivamente no servidor Next.js. Não crie variáveis `NEXT_PUBLIC_` para elas e não envie seus valores ao browser.
+> `SUPABASE_SERVICE_ROLE_KEY`, `PRODEXY_SISTEMA_SQL_EXECUTOR_DB_PASSWORD` e as duas referências privadas do Cognito são usadas exclusivamente no servidor Next.js. Não crie variáveis `NEXT_PUBLIC_` para elas e não envie seus valores ao browser. A access key do Authentication ainda não existe e só será criada após autorização específica.
 
 ## 2. Criar o banco no Supabase
 

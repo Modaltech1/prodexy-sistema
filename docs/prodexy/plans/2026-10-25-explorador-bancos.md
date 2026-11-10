@@ -173,6 +173,8 @@ Este ExecPlan é o checklist canônico. Atualizar `README.md`/`docs/ARCHITECTURE
 
 2026-11-10 — Responsável solicitou liberar no explorador todas as tabelas do Oficina Mais como no PH Outlet. Allowlist somente leitura adicionada para as 18 tabelas, preservando a ocultação dos campos sensíveis e operacionais. Testes do explorador 17/17, typecheck, ESLint afetado e `git diff --check` passaram. Nenhum grant, migration, alteração AWS ou deploy foi executado.
 
+2026-11-10 — Responsável pediu coerência com o Supabase no fluxo principal da tabela. O Explorador passou a abrir Dados por padrão ao carregar o catálogo, trocar de database ou selecionar tabela; Estrutura permanece como aba secundária. Testes do explorador 18/18 e demais checks afetados passaram. Nenhum banco ou grant foi alterado.
+
 ## Resultado final
 
 CONCLUÍDO LOCALMENTE — explorador conectado aos databases PH Outlet e Oficina Mais, com catálogo, estrutura, dados autorizados por allowlist, consumo aproximado, filtro estruturado e navegação validada. Nenhuma migration foi necessária. A liberação do Oficina Mais aguarda publicação e validação visual do responsável.

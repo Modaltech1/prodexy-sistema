@@ -215,3 +215,10 @@ test("SQL Editor exige seleção explícita e confere o database retornado pelo 
   assert.match(executor, /SELECT current_database\(\) AS database_name/);
   assert.match(executor, /databaseName !== integration\.database/);
 });
+
+test("Explorador abre tabelas em Dados por padrão", () => {
+  const page = readFileSync(new URL("../src/app/infraestrutura/bancos/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /useState<ExplorerTab>\("data"\)/);
+  assert.match(page, /setSelectedTableName\(`\$\{table\.schema\}\.\$\{table\.name\}`\); setTab\("data"\)/);
+  assert.doesNotMatch(page, /setSelectedTableName\(`\$\{table\.schema\}\.\$\{table\.name\}`\); setTab\("structure"\)/);
+});

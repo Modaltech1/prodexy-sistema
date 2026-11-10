@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   CalendarDays, FolderKanban, ListTodo, WalletCards, Gauge, ReceiptText, GitCompareArrows,
   Split, HandCoins, LockKeyhole, Sheet, Target, UsersRound, BriefcaseBusiness, Settings,
-  ChevronDown, Menu, X, Database, PanelLeftClose, PanelLeftOpen, SquareTerminal, type LucideIcon
+  ChevronDown, Menu, X, Database, PanelLeftClose, PanelLeftOpen, SquareTerminal, ShieldCheck, type LucideIcon
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { GlobalSearch } from "./global-search";
@@ -32,6 +32,7 @@ const finance = [
 const databases = [
   { href: "/infraestrutura/bancos", label: "Explorador", icon: Database },
   { href: "/infraestrutura/sql", label: "SQL Editor", icon: SquareTerminal },
+  { href: "/infraestrutura/authentication", label: "Authentication", icon: ShieldCheck },
 ];
 
 const secondary = [
@@ -54,7 +55,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [databasesOpen, setDatabasesOpen] = useState(pathname.startsWith("/infraestrutura"));
   const isDatabaseExplorer = pathname.startsWith("/infraestrutura/bancos");
   const isSqlEditor = pathname.startsWith("/infraestrutura/sql");
-  const isInfrastructureTool = isDatabaseExplorer || isSqlEditor;
+  const isAuthentication = pathname.startsWith("/infraestrutura/authentication");
+  const isInfrastructureTool = isDatabaseExplorer || isSqlEditor || isAuthentication;
   const [compactSidebar, setCompactSidebar] = useState(isInfrastructureTool);
   const close = () => setMobileOpen(false);
 
@@ -71,7 +73,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {financeOpen && <div className="nav-subitems">{finance.map((item) => <NavItem {...item} key={item.href} exact={item.href === "/financeiro"} onClick={close}/>)}</div>}
       </div>
       <div className="nav-group">
-        <button className={`nav-section-button ${pathname.startsWith("/infraestrutura") ? "active" : ""}`} title="Banco de dados" aria-label="Banco de dados" onClick={() => setDatabasesOpen((value) => !value)}><Database size={17}/><span>Banco de dados</span><ChevronDown size={15} className={databasesOpen ? "rotated" : ""}/></button>
+        <button className={`nav-section-button ${pathname.startsWith("/infraestrutura") ? "active" : ""}`} title="Infraestrutura" aria-label="Infraestrutura" onClick={() => setDatabasesOpen((value) => !value)}><Database size={17}/><span>Infraestrutura</span><ChevronDown size={15} className={databasesOpen ? "rotated" : ""}/></button>
         {databasesOpen && <div className="nav-subitems">{databases.map((item) => <NavItem {...item} key={item.href} onClick={close}/>)}</div>}
       </div>
       <div className="nav-group">{secondary.map((item) => <NavItem {...item} key={item.href} onClick={close}/>)}</div>
@@ -90,7 +92,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {compactSidebar ? <PanelLeftOpen size={19}/> : <PanelLeftClose size={19}/>}
         </button>
         {isInfrastructureTool ? <>
-          <strong className="dbx-topbar-title">Infraestrutura <span>/</span> {isSqlEditor ? "SQL Editor" : "Bancos"}</strong>
+          <strong className="dbx-topbar-title">Infraestrutura <span>/</span> {isSqlEditor ? "SQL Editor" : isAuthentication ? "Authentication" : "Bancos"}</strong>
         </> : <><GlobalSearch/><QuickAdd/></>}
       </header>
       <main className={`content ${isInfrastructureTool ? "content--database" : ""}`}>{children}</main>
