@@ -4,7 +4,7 @@ import test from "node:test";
 import { getRegisteredDatabaseProject, getRegisteredDatabaseProjects } from "../src/features/database-explorer/registry.ts";
 import { assembleCatalog, catalogQueries } from "../src/features/database-explorer/catalog.ts";
 import { buildDataQuery } from "../src/features/database-explorer/data-query.ts";
-import { getTableDataPolicy } from "../src/features/database-explorer/data-policy.ts";
+import { getOficinaMaisDataPolicies, getTableDataPolicy } from "../src/features/database-explorer/data-policy.ts";
 import { getPrimarySqlResult, serializeSqlResultAsCsv, serializeSqlResultAsJson, serializeSqlResultAsMarkdown } from "../src/features/database-explorer/sql-editor.ts";
 import { buildDeleteRowsQuery } from "../src/features/database-explorer/row-actions.ts";
 
@@ -73,6 +73,40 @@ test("política de dados exclui identidade Cognito e campos operacionais sensív
   assert.equal(getTableDataPolicy("outro", "public", "usuarios"), null);
   assert.equal(getTableDataPolicy("ph-outlet", "public", "metas")?.columns.length, 12);
   assert.equal(getTableDataPolicy("ph-outlet", "public", "historico_metas")?.columns.length, 12);
+});
+
+test("Oficina Mais libera as 18 tabelas somente para leitura e oculta campos sensíveis", () => {
+  const policies = getOficinaMaisDataPolicies();
+  const profiles = getTableDataPolicy("oficina-mais", "public", "perfis");
+  const billing = getTableDataPolicy("oficina-mais", "public", "billing_subscriptions");
+  const webhooks = getTableDataPolicy("oficina-mais", "public", "billing_webhook_events");
+  const photos = getTableDataPolicy("oficina-mais", "public", "ordem_fotos");
+
+  assert.equal(policies.length, 18);
+  assert.equal(policies.every((policy) => policy.deleteEnabled === false), true);
+  assert.ok(profiles);
+  assert.ok(billing);
+  assert.ok(webhooks);
+  assert.ok(photos);
+  assert.equal(profiles.columns.includes("cognito_sub"), false);
+  assert.equal(billing.columns.includes("provider_customer_id"), false);
+  assert.equal(billing.columns.includes("provider_subscription_id"), false);
+  assert.equal(billing.columns.includes("checkout_session_id"), false);
+  assert.equal(webhooks.columns.includes("payload"), false);
+  assert.equal(webhooks.columns.includes("provider_event_id"), false);
+  assert.equal(photos.columns.includes("storage_key"), false);
+  assert.equal(getTableDataPolicy("oficina-mais", "private", "perfis"), null);
+  assert.equal(getTableDataPolicy("outro", "public", "perfis"), null);
+});
+
+test("consulta de linhas do Oficina Mais usa somente a política do projeto", () => {
+  const policy = getTableDataPolicy("oficina-mais", "public", "clientes");
+  assert.ok(policy);
+  const query = buildDataQuery(policy, { search: "Maria", filterColumn: "nome", filterOperator: "contains" });
+  assert.match(query.text, /FROM "public"\."clientes"/);
+  assert.match(query.text, /WHERE "nome"::text ILIKE \$1 ESCAPE/);
+  assert.equal(query.values[0], "%Maria%");
+  assert.equal(getTableDataPolicy("ph-outlet", "public", "clientes"), null);
 });
 
 test("consulta de linhas limita página e não interpola entrada do browser", () => {

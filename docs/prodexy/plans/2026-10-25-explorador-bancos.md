@@ -111,6 +111,13 @@ O responsável precisa consultar visualmente os bancos dos projetos, suas tabela
 - [x] Filtro de dados estruturado por coluna, operador e valor; entradas continuam validadas pela allowlist server-side.
 - [x] Validação visual do responsável recebida em 2026-10-26.
 
+### Onboarding de dados do Oficina Mais
+
+- [x] As 18 tabelas `public` receberam política explícita de leitura no explorador.
+- [x] `cognito_sub`, payload de webhook, identificadores privados do provedor de cobrança e chaves internas de storage permanecem fora da interface.
+- [x] Exclusão pelo explorador permanece desabilitada para o Oficina Mais; este bloco autorizou leitura, não mutação.
+- [x] Nenhum grant, migration, recurso AWS ou configuração do PostgreSQL foi alterado.
+
 ## Migrations e dados
 
 B1 não prepara nem aplica migration. B2 requer alterações de role/grants/HBA executadas pelo responsável sob orientação do Platform Agent; não são migrations de negócio do PH. B3 não poderá ler linhas até política explícita de colunas/tabelas sensíveis. Qualquer migration futura do próprio Prodexy Sistema é preparada pelo executor, aplicada manualmente pelo responsável e validada antes das etapas dependentes; não executar `schema.sql` em banco existente.
@@ -164,6 +171,8 @@ Este ExecPlan é o checklist canônico. Atualizar `README.md`/`docs/ARCHITECTURE
 
 2026-10-26 — Responsável validou visualmente as correções. B1–B4 e o bloco corretivo estão concluídos localmente. O explorador foi encerrado sem migration e sem deploy; publicação e homologação em produção permanecem uma atividade separada.
 
+2026-11-10 — Responsável solicitou liberar no explorador todas as tabelas do Oficina Mais como no PH Outlet. Allowlist somente leitura adicionada para as 18 tabelas, preservando a ocultação dos campos sensíveis e operacionais. Testes do explorador 17/17, typecheck, ESLint afetado e `git diff --check` passaram. Nenhum grant, migration, alteração AWS ou deploy foi executado.
+
 ## Resultado final
 
-CONCLUÍDO LOCALMENTE — explorador conectado ao database PH, com catálogo, estrutura, dados autorizados, consumo aproximado, filtro estruturado e navegação validada. Nenhuma migration foi necessária. Publicação e homologação em produção não foram executadas.
+CONCLUÍDO LOCALMENTE — explorador conectado aos databases PH Outlet e Oficina Mais, com catálogo, estrutura, dados autorizados por allowlist, consumo aproximado, filtro estruturado e navegação validada. Nenhuma migration foi necessária. A liberação do Oficina Mais aguarda publicação e validação visual do responsável.
