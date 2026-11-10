@@ -127,6 +127,8 @@ Atualizar este ExecPlan. Após homologação, atualizar README/operação local;
 
 2026-11-10 — Responsável autorizou explicitamente uma única access key persistente. A sessão AWS foi autenticada na conta `130854680883`; a chave foi criada para `prodexy-prod-sistema-cognito-admin`, sem exibição dos valores, e a releitura sanitizada confirmou uma chave `Active`. O Responsável confirmou o armazenamento no `.env` local e na Vercel. O arquivo privado e sua pasta temporária foram removidos e a ausência de ambos foi validada. Publicação e homologação real permanecem pendentes.
 
+2026-11-10 — O primeiro deploy do Bloco C compilou, mas o typecheck da Vercel interrompeu por `TS5097` em um import interno terminado em `.ts`. O import de produção foi corrigido para resolução compatível com Next/TypeScript e o teste de registro passou a validar separadamente o inventário real e os vínculos declarados, sem exigir esse sufixo no runtime. Typecheck, lint afetado, 5/5 testes Cognito, 18/18 testes do Explorador e `git diff --check` passaram. Build local não foi executado para não carregar o `.env` privado; novo deploy permanece com o Responsável.
+
 ## Resultado final
 
 Blocos A e B concluídos e validados. No Bloco C, credencial criada, armazenada e artefato temporário removido; faltam publicação e homologação real pelo Responsável.

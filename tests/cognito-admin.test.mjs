@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { mapCognitoUser, matchesCognitoUser, readCognitoAttribute } from "../src/features/cognito-admin/model.ts";
 import { parseCreateCognitoUserInput, parseDeleteCognitoUserInput, parsePatchCognitoUserInput } from "../src/features/cognito-admin/input.ts";
-import { getCognitoAdminTarget, getCognitoAdminTargets } from "../src/features/cognito-admin/registry.ts";
+import { getRegisteredDatabaseProjects } from "../src/features/database-explorer/registry.ts";
 
 test("normaliza atributos e estado do usuário Cognito", () => {
   const user = mapCognitoUser({
@@ -58,11 +59,17 @@ test("bloqueia projeto, ação e senha inválidos antes do SDK", () => {
 });
 
 test("organiza Authentication pelo mesmo projeto e database do explorador", () => {
-  const targets = getCognitoAdminTargets();
-  assert.deepEqual(targets.map((target) => target.id), ["ph-outlet", "oficina-mais"]);
-  assert.equal(targets[0].databaseName, "prodexy_ph_outlet");
-  assert.equal(targets[0].poolScope, "shared-dedicated");
-  assert.equal(targets[1].databaseName, "prodexy_oficina_mais");
-  assert.equal(targets[1].poolScope, "product");
-  assert.equal(getCognitoAdminTarget("inexistente"), null);
+  const projects = getRegisteredDatabaseProjects().projects;
+  assert.deepEqual(projects.map((project) => [project.id, project.databaseName]), [
+    ["ph-outlet", "prodexy_ph_outlet"],
+    ["oficina-mais", "prodexy_oficina_mais"],
+  ]);
+
+  const registrySource = readFileSync(
+    new URL("../src/features/cognito-admin/registry.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(registrySource, /projectId: "ph-outlet"[\s\S]*poolScope: "shared-dedicated"/);
+  assert.match(registrySource, /projectId: "oficina-mais"[\s\S]*poolScope: "product"/);
+  assert.match(registrySource, /from "\.\.\/database-explorer\/registry"/);
 });

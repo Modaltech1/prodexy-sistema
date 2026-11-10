@@ -1,4 +1,4 @@
-import { getRegisteredDatabaseProject } from "../database-explorer/registry.ts";
+import { getRegisteredDatabaseProject } from "../database-explorer/registry";
 import type { CognitoAdminTarget } from "./contracts";
 
 const registrations = [
